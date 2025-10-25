@@ -122,37 +122,16 @@ def load_data():
 
     return df
 
-# Auto-start scraper if no data file exists
-if not DATA_FILE.exists() and not st.session_state.scraper_running:
-    st.warning("⚠️ No data file found. Starting scraper automatically...")
-    try:
-        process = subprocess.Popen(
-            ['python3', str(MASTER_SCRAPER)],
-            cwd=str(MASTER_SCRAPER.parent),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            start_new_session=True
-        )
-        st.session_state.scraper_running = True
-        st.session_state.scraper_process = process
-        st.session_state.scraper_start_time = time.time()
-        time.sleep(1)
-        st.rerun()
-    except Exception as e:
-        st.error(f"❌ Failed to auto-start scraper: {e}")
-        st.info("💡 Please run manually: python master_scraper.py")
-        st.stop()
-
 # Load the data
 df = load_data()
 
-# Check if data exists (might be None if scraper is still running)
+# Check if data exists
 if df is None or len(df) == 0:
     if st.session_state.scraper_running:
         # Scraper is running, show message and continue checking
         st.info("📊 Data is being scraped. Please wait...")
     else:
-        st.error("❌ No data found! Click 'Run Scraper' button above to collect data.")
+        st.error("❌ No data found! Click the '🔄 Run Scraper' button above to collect data.")
     st.stop()
 
 # Main content
