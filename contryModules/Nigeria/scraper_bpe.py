@@ -252,6 +252,8 @@ def scrape_all_posts():
     # Step 3: Process posts in parallel
     print(f"\nStep 3: Processing posts (filtering for infrastructure)...")
     all_data = []
+    seen_urls = set()  # Track URLs to avoid duplicates
+    seen_titles = set()  # Track titles to avoid duplicates
     skipped = 0
 
     with ThreadPoolExecutor(max_workers=8) as executor:
@@ -264,7 +266,13 @@ def scrape_all_posts():
             try:
                 result = future.result()
                 if result:
-                    all_data.append(result)
+                    # Deduplicate by URL and title
+                    if result['url'] not in seen_urls and result['title'] not in seen_titles:
+                        seen_urls.add(result['url'])
+                        seen_titles.add(result['title'])
+                        all_data.append(result)
+                    else:
+                        skipped += 1
                 else:
                     skipped += 1
 

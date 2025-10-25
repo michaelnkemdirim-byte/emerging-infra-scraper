@@ -157,14 +157,16 @@ async def scrape_all_categories():
 
         all_data = []
         seen_urls = set()
+        seen_titles = set()  # Track titles to avoid duplicates
 
         for category, our_category in CATEGORIES.items():
             articles = await scrape_category(page, category, our_category)
 
             # Deduplicate across categories
             for article in articles:
-                if article['url'] not in seen_urls:
+                if article['url'] not in seen_urls and article['title'] not in seen_titles:
                     seen_urls.add(article['url'])
+                    seen_titles.add(article['title'])
                     all_data.append(article)
 
             await asyncio.sleep(1)  # Be polite between categories

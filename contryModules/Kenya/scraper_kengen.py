@@ -321,6 +321,8 @@ def scrape_all_articles():
     # Step 2: Scrape each article in parallel
     print("\nStep 2: Scraping articles in parallel (8 workers)...")
     all_data = []
+    seen_urls = set()  # Track URLs to avoid duplicates
+    seen_titles = set()  # Track titles to avoid duplicates
 
     with ThreadPoolExecutor(max_workers=8) as executor:
         # Submit all scraping tasks
@@ -335,18 +337,26 @@ def scrape_all_articles():
             try:
                 article_data = future.result()
                 if article_data and article_data['title']:
-                    # Filter by date - only include articles from last 30 days
-                    if article_data.get('date_iso'):
-                        try:
-                            article_date = datetime.strptime(article_data['date_iso'], '%Y-%m-%d')
-                            if article_date >= DATE_30_DAYS_AGO:
+                    # Deduplicate by URL and title
+                    if article_data['url'] not in seen_urls and article_data['title'] not in seen_titles:
+                        # Filter by date - only include articles from last 30 days
+                        if article_data.get('date_iso'):
+                            try:
+                                article_date = datetime.strptime(article_data['date_iso'], '%Y-%m-%d')
+                                if article_date >= DATE_30_DAYS_AGO:
+                                    seen_urls.add(article_data['url'])
+                                    seen_titles.add(article_data['title'])
+                                    all_data.append(article_data)
+                            except:
+                                # If date parsing fails, include for manual review
+                                seen_urls.add(article_data['url'])
+                                seen_titles.add(article_data['title'])
                                 all_data.append(article_data)
-                        except:
-                            # If date parsing fails, include for manual review
+                        else:
+                            # If no date, include for manual review
+                            seen_urls.add(article_data['url'])
+                            seen_titles.add(article_data['title'])
                             all_data.append(article_data)
-                    else:
-                        # If no date, include for manual review
-                        all_data.append(article_data)
                 else:
                     skipped += 1
 

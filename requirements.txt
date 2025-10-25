@@ -1,0 +1,18 @@
+# Web scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+patchright>=1.55.0
+feedparser>=6.0.10
+
+# Data processing
+pandas>=2.0.0
+python-dateutil>=2.8.2
+pyyaml>=6.0
+
+# AI/Translation/Categorization
+anthropic>=0.39.0
+
+# Dashboard
+streamlit>=1.28.0
+plotly>=5.18.0
+openpyxl>=3.1.0

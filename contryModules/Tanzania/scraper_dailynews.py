@@ -130,9 +130,11 @@ def scrape_all_posts() -> List[Dict]:
                 summary = extract_summary(post)
 
                 # Skip duplicates
-                if url in seen_urls:
+                if url in seen_urls or title in seen_titles:
                     continue
                 seen_urls.add(url)
+
+                seen_titles.add(title)
 
                 # Filter relevance
                 if not is_infrastructure_relevant(title, summary):

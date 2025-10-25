@@ -286,6 +286,8 @@ def scrape_category(category_name: str, category_id: int):
     # Step 3: Process posts in parallel
     print(f"\nStep 3: Processing and filtering posts...")
     category_data = []
+    seen_urls = set()  # Track URLs to avoid duplicates
+    seen_titles = set()  # Track titles to avoid duplicates
     skipped = 0
 
     with ThreadPoolExecutor(max_workers=8) as executor:
@@ -298,7 +300,13 @@ def scrape_category(category_name: str, category_id: int):
             try:
                 result = future.result()
                 if result:
-                    category_data.append(result)
+                    # Deduplicate by URL and title
+                    if result['url'] not in seen_urls and result['title'] not in seen_titles:
+                        seen_urls.add(result['url'])
+                        seen_titles.add(result['title'])
+                        category_data.append(result)
+                    else:
+                        skipped += 1
                 else:
                     skipped += 1
 

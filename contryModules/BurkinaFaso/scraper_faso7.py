@@ -211,6 +211,7 @@ def scrape_faso7():
 
     all_data = []
     seen_urls = set()  # Track URLs to avoid duplicates
+    seen_titles = set()  # Track titles to avoid duplicates
 
     # Scrape with progress bar
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
@@ -226,8 +227,10 @@ def scrape_faso7():
                     details = future.result()
                     if details:
                         # Deduplicate by URL
-                        if details['url'] not in seen_urls:
+                        if details['url'] not in seen_urls and details['title'] not in seen_titles:
                             seen_urls.add(details['url'])
+
+                            seen_titles.add(details['title'])
 
                             article = {
                                 'country': 'Burkina Faso',

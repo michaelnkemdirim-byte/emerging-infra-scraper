@@ -215,6 +215,8 @@ def scrape_all_posts():
 
     # Fetch all posts with pagination
     all_data = []
+    seen_urls = set()  # Track URLs to avoid duplicates
+    seen_titles = set()  # Track titles to avoid duplicates
     page = 1
 
     print("\nFetching posts...")
@@ -229,7 +231,11 @@ def scrape_all_posts():
         for post in posts:
             data = parse_post(post, cat_map)
             if data and data['title']:  # Only add if we have a title
-                all_data.append(data)
+                # Deduplicate by URL and title
+                if data['url'] not in seen_urls and data['title'] not in seen_titles:
+                    seen_urls.add(data['url'])
+                    seen_titles.add(data['title'])
+                    all_data.append(data)
 
         # Check if there are more pages
         if page >= total_pages:

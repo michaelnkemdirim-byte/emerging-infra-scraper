@@ -145,6 +145,7 @@ def scrape_capitalethiopia():
 
     all_data = []
     seen_urls = set()
+    seen_titles = set()
 
     for keyword in SEARCH_KEYWORDS:
         print(f"\nSearching for: {keyword}")
@@ -159,9 +160,10 @@ def scrape_capitalethiopia():
             for post in posts:
                 article = extract_article_data(post)
                 if article and article['title'] and article['url']:
-                    # Deduplicate by URL
-                    if article['url'] not in seen_urls:
+                    # Deduplicate by URL and title
+                    if article['url'] not in seen_urls and article['title'] not in seen_titles:
                         seen_urls.add(article['url'])
+                        seen_titles.add(article['title'])
                         all_data.append(article)
                         print(f"  ✓ {article['date_iso']}: {article['title'][:70]}")
 

@@ -135,9 +135,11 @@ def process_rss_item(item: Dict, seen_urls: set) -> Dict[str, Any]:
         pub_date = item['pubDate'].strip()
 
         # Skip duplicates
-        if url in seen_urls:
+        if url in seen_urls or title in seen_titles:
             return None
         seen_urls.add(url)
+
+        seen_titles.add(title)
 
         # Parse date
         date_iso = parse_date(pub_date)

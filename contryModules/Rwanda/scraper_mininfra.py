@@ -108,8 +108,10 @@ def fetch_news_list_page(page_num: int = 1) -> tuple:
         seen_urls = set()
         unique_articles = []
         for article in articles:
-            if article['url'] not in seen_urls:
+            if article['url'] not in seen_urls and article['title'] not in seen_titles:
                 seen_urls.add(article['url'])
+
+                seen_titles.add(article['title'])
                 # Filter by date - only include articles from last 30 days
                 if article.get('date_iso'):
                     try:
@@ -206,6 +208,7 @@ def scrape_all_news():
     print("\nStep 1: Fetching article URLs from news list pages...")
     all_articles = []
     seen_urls = set()  # Track URLs to avoid duplicates
+    seen_titles = set()  # Track titles to avoid duplicates
     page_num = 1
     max_pages = 25  # Safety limit (we know there are ~20 pages)
 
@@ -221,8 +224,10 @@ def scrape_all_news():
             # Deduplicate by URL
             for article in articles:
                 url = article.get('url', '')
-                if url and url not in seen_urls:
+                if url and url not in seen_urls and title not in seen_titles:
                     seen_urls.add(url)
+
+                    seen_titles.add(title)
                     all_articles.append(article)
             print(f"  Page {page_num}: Found {len(articles)} articles ({len(all_articles)} unique so far)", end='\r')
 

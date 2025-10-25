@@ -91,8 +91,10 @@ def fetch_news_list_page(page_num: int = 1) -> tuple:
         seen_urls = set()
         unique_articles = []
         for article in articles:
-            if article['url'] not in seen_urls:
+            if article['url'] not in seen_urls and article['title'] not in seen_titles:
                 seen_urls.add(article['url'])
+
+                seen_titles.add(article['title'])
                 # Filter by date - only include articles from last 30 days
                 if article.get('date_iso'):
                     try:

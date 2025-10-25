@@ -131,6 +131,8 @@ def scrape_all_posts():
     print("="*60)
 
     all_data = []
+    seen_urls = set()  # Track URLs to avoid duplicates
+    seen_titles = set()  # Track titles to avoid duplicates
     page = 1
 
     print("\nFetching posts...")
@@ -145,10 +147,14 @@ def scrape_all_posts():
         for post in posts:
             data = parse_post(post)
             if data and data['title']:
-                # Replace commas in text fields to avoid CSV issues
-                data['title'] = data['title'].replace(',', ' -')
-                data['summary'] = data['summary'].replace(',', ' -')
-                all_data.append(data)
+                # Deduplicate by URL and title
+                if data['url'] not in seen_urls and data['title'] not in seen_titles:
+                    # Replace commas in text fields to avoid CSV issues
+                    data['title'] = data['title'].replace(',', ' -')
+                    data['summary'] = data['summary'].replace(',', ' -')
+                    seen_urls.add(data['url'])
+                    seen_titles.add(data['title'])
+                    all_data.append(data)
 
         if page >= total_pages:
             break
