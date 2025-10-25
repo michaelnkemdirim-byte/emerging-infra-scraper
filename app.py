@@ -22,23 +22,40 @@ def install_playwright_browsers():
     try:
         # Check if running on Streamlit Cloud (has limited write permissions)
         if os.getenv('STREAMLIT_SHARING_MODE') or os.getenv('STREAMLIT_RUNTIME_ENV'):
-            with st.spinner("🔄 Installing browser for web scraping (one-time setup)..."):
+            with st.spinner("🔄 Installing Chromium browser (one-time setup, ~2 mins)..."):
+                print("="*80)
+                print("INSTALLING PATCHRIGHT BROWSER")
+                print("="*80)
+
                 result = subprocess.run(
                     [sys.executable, "-m", "patchright", "install", "chromium"],
                     capture_output=True,
                     text=True,
                     timeout=300  # 5 minute timeout
                 )
+
+                print(f"Return code: {result.returncode}")
+                print(f"STDOUT: {result.stdout}")
+                if result.stderr:
+                    print(f"STDERR: {result.stderr}")
+                print("="*80)
+
                 if result.returncode == 0:
-                    return True
-        return True
+                    st.success("✅ Browser installed successfully!")
+                    return {"installed": True, "output": result.stdout}
+                else:
+                    st.warning(f"⚠️ Browser installation returned code {result.returncode}")
+                    return {"installed": False, "error": result.stderr}
+        return {"installed": True, "skipped": "Not on Streamlit Cloud"}
     except Exception as e:
         # Don't fail app startup if browser install fails
-        print(f"Browser installation skipped or failed: {e}")
-        return False
+        error_msg = f"Browser installation failed: {e}"
+        print(error_msg)
+        st.error(f"❌ {error_msg}")
+        return {"installed": False, "error": str(e)}
 
 # Install browsers (runs once per app restart)
-install_playwright_browsers()
+browser_status = install_playwright_browsers()
 
 # Data file path
 DATA_FILE = Path(__file__).parent / "combined_data.csv"
@@ -131,6 +148,23 @@ with st.sidebar:
     - **Smart City**: Digital infrastructure, urban tech
     - **Infrastructure**: General infrastructure projects
     """)
+
+    # Browser status section
+    st.markdown("---")
+    st.subheader("🌐 Browser Status")
+    if browser_status.get("installed"):
+        if browser_status.get("skipped"):
+            st.info("💻 Local mode (browser not needed)")
+        else:
+            st.success("✅ Chromium installed")
+            if browser_status.get("output"):
+                with st.expander("Show installation details"):
+                    st.code(browser_status["output"][:500])
+    else:
+        st.error("❌ Browser not installed")
+        if browser_status.get("error"):
+            with st.expander("Show error details"):
+                st.code(browser_status["error"])
 
 
 # Load data
