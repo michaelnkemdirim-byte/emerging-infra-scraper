@@ -103,6 +103,7 @@ def scrape_all_posts() -> List[Dict]:
     print("="*60)
 
     all_data = []
+    seen_urls = set()  # Track URLs to avoid duplicates
     page = 1
 
     while True:
@@ -124,6 +125,11 @@ def scrape_all_posts() -> List[Dict]:
                 url = post['link']
                 summary = extract_summary(post)
                 wp_category = get_category_name(post)
+
+                # Skip duplicates
+                if url in seen_urls:
+                    continue
+                seen_urls.add(url)
 
                 # Clean text
                 title = title.strip().replace(',', ' ')

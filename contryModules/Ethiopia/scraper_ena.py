@@ -229,6 +229,7 @@ def scrape_ena():
     ]
 
     all_data = []
+    seen_urls = set()  # Track URLs to avoid duplicates
 
     # Scrape with progress bar
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
@@ -255,18 +256,22 @@ def scrape_ena():
                             except:
                                 pass
 
-                        article = {
-                            'country': 'Ethiopia',
-                            'source': 'Ethiopian News Agency (ENA)',
-                            'title': details['title'],
-                            'date_iso': date_published,
-                            'summary': details['summary'],
-                            'url': details['url'],
-                            'category': article_info['category'],
-                            'status': ''
-                        }
+                        # Deduplicate by URL
+                        if details['url'] not in seen_urls:
+                            seen_urls.add(details['url'])
 
-                        all_data.append(article)
+                            article = {
+                                'country': 'Ethiopia',
+                                'source': 'Ethiopian News Agency (ENA)',
+                                'title': details['title'],
+                                'date_iso': date_published,
+                                'summary': details['summary'],
+                                'url': details['url'],
+                                'category': article_info['category'],
+                                'status': ''
+                            }
+
+                            all_data.append(article)
                 except Exception as e:
                     pass
 

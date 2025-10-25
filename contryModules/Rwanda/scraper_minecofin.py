@@ -205,6 +205,7 @@ def scrape_all_news():
     # Step 1: Fetch all article URLs from paginated list
     print("\nStep 1: Fetching article URLs from news list pages...")
     all_articles = []
+    seen_urls = set()  # Track URLs to avoid duplicates
     page_num = 1
     max_pages = 35  # Safety limit (we know there are ~31 pages)
 
@@ -217,13 +218,18 @@ def scrape_all_news():
             break
 
         if articles:
-            all_articles.extend(articles)
-            print(f"  Page {page_num}: Found {len(articles)} current month articles (total: {len(all_articles)})", end='\r')
+            # Deduplicate by URL
+            for article in articles:
+                url = article.get('url', '')
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    all_articles.append(article)
+            print(f"  Page {page_num}: Found {len(articles)} articles ({len(all_articles)} unique so far)", end='\r')
 
         page_num += 1
         time.sleep(0.5)  # Rate limiting
 
-    print(f"\n  Total current month article URLs collected: {len(all_articles)}")
+    print(f"\n  Total unique article URLs collected: {len(all_articles)}")
 
     if not all_articles:
         print(f"  ERROR: No articles from {CURRENT_YEAR}-{CURRENT_MONTH:02d} found!")

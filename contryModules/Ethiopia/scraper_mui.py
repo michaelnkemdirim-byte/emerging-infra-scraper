@@ -109,6 +109,7 @@ def scrape_mui():
     print()
 
     all_data = []
+    seen_urls = set()  # Track URLs to avoid duplicates
     page = 1
 
     while True:
@@ -121,21 +122,29 @@ def scrape_mui():
         for post in posts:
             article = extract_article_data(post)
             if article and article['title'] and article['url']:
+                # Deduplicate by URL
+                url = article['url']
+                if url in seen_urls:
+                    continue
+
                 # Client-side date validation (filter articles outside 30-day range)
                 if article.get('date_iso'):
                     try:
                         article_date = datetime.strptime(article['date_iso'], '%Y-%m-%d')
                         if article_date >= DATE_THRESHOLD:
+                            seen_urls.add(url)
                             all_data.append(article)
                             print(f"  ✓ {article['date_iso']}: {article['title'][:70]}")
                         else:
                             print(f"  ✗ Skipping old article ({article['date_iso']}): {article['title'][:60]}")
                     except:
                         # If date parsing fails, include for manual review
+                        seen_urls.add(url)
                         all_data.append(article)
                         print(f"  ⚠ {article['date_iso']}: {article['title'][:70]}")
                 else:
                     # No date, include for manual review
+                    seen_urls.add(url)
                     all_data.append(article)
                     print(f"  ⚠ No date: {article['title'][:70]}")
 

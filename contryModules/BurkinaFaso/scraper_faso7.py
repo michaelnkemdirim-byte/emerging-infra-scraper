@@ -210,6 +210,7 @@ def scrape_faso7():
     ]
 
     all_data = []
+    seen_urls = set()  # Track URLs to avoid duplicates
 
     # Scrape with progress bar
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
@@ -224,18 +225,22 @@ def scrape_faso7():
                 try:
                     details = future.result()
                     if details:
-                        article = {
-                            'country': 'Burkina Faso',
-                            'source': 'Faso7',
-                            'title': details['title'],
-                            'date_iso': details['date_published'],
-                            'summary': details['summary'],
-                            'url': details['url'],
-                            'category': article_info['category'],
-                            'status': ''
-                        }
+                        # Deduplicate by URL
+                        if details['url'] not in seen_urls:
+                            seen_urls.add(details['url'])
 
-                        all_data.append(article)
+                            article = {
+                                'country': 'Burkina Faso',
+                                'source': 'Faso7',
+                                'title': details['title'],
+                                'date_iso': details['date_published'],
+                                'summary': details['summary'],
+                                'url': details['url'],
+                                'category': article_info['category'],
+                                'status': ''
+                            }
+
+                            all_data.append(article)
                 except Exception as e:
                     pass
 
