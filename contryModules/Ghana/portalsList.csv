@@ -1,0 +1,24 @@
+name                                                , url                                                , type
+Ministry of Roads & Highways - Road Works           , https://mrh.gov.gh/category/road-works/            , html
+Ministry of Roads & Highways - Bridges              , https://mrh.gov.gh/category/bridges/               , html
+Ministry of Roads & Highways - Project Commissioning, https://mrh.gov.gh/category/project-commissioning/ , html
+Ministry of Roads & Highways - Inspection           , https://mrh.gov.gh/category/inspection/            , html
+Ministry of Roads & Highways - Sod Cutting          , https://mrh.gov.gh/category/sod-cutting/           , html
+Ministry of Roads & Highways - Procurement Notices  , https://mrh.gov.gh/category/procurement-notices/   , html
+Ghana Ports & Harbours Authority                    , https://www.ghanaports.gov.gh/                     , html
+Ghana Airports Company Limited                      , https://www.gacl.com.gh/                           , html
+Ghana Civil Aviation Authority                      , https://www.gcaa.com.gh/                           , html
+Department of Urban Roads                           , https://dur.gov.gh/                                , html
+Department of Feeder Roads                          , https://dfr.gov.gh/                                , html
+Ghana Highway Authority                             , https://www.highways.gov.gh/                       , html
+Energy Commission                                   , https://www.energycom.gov.gh/                      , html
+Ministry of Transport                               , https://www.mot.gov.gh/                            , html
+Ghana Infrastructure Investment Fund                , https://giif.gov.gh/                               , html
+Ministry of Energy & Green Transition               , https://www.energymin.gov.gh/                      , html
+National Development Planning Commission            , https://ndpc.gov.gh/                               , html
+Ministry of Finance                                 , https://mofep.gov.gh/                              , html
+GhanaWeb - Infrastructure News                      , https://www.ghanaweb.com/GhanaHomePage/NewsArchive/, html
+Ghana Statistical Service                           , https://www.statsghana.gov.gh/                     , html
+Graphic Online - Infrastructure                     , https://www.graphic.com.gh/infrastructure          , html
+AllAfrica Ghana - Infrastructure                    , https://allafrica.com/ghana/infrastructure         , html
+Ghana Free Zones Authority                          , https://www.gfza.gov.gh/                           , html
