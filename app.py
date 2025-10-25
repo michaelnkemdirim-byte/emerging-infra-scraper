@@ -7,12 +7,38 @@ import plotly.express as px
 import plotly.graph_objects as go
 import subprocess
 import time
+import sys
 
 st.set_page_config(
     page_title="Emerging Infrastructure Dashboard",
     page_icon="🏗️",
     layout="wide"
 )
+
+# Install Playwright browsers on first run (for Streamlit Cloud)
+@st.cache_resource
+def install_playwright_browsers():
+    """Install Playwright browsers in background on app startup"""
+    try:
+        # Check if running on Streamlit Cloud (has limited write permissions)
+        if os.getenv('STREAMLIT_SHARING_MODE') or os.getenv('STREAMLIT_RUNTIME_ENV'):
+            with st.spinner("🔄 Installing browser for web scraping (one-time setup)..."):
+                result = subprocess.run(
+                    [sys.executable, "-m", "patchright", "install", "chromium"],
+                    capture_output=True,
+                    text=True,
+                    timeout=300  # 5 minute timeout
+                )
+                if result.returncode == 0:
+                    return True
+        return True
+    except Exception as e:
+        # Don't fail app startup if browser install fails
+        print(f"Browser installation skipped or failed: {e}")
+        return False
+
+# Install browsers (runs once per app restart)
+install_playwright_browsers()
 
 # Data file path
 DATA_FILE = Path(__file__).parent / "combined_data.csv"
