@@ -20,7 +20,7 @@ import anthropic
 ROOT_DIR = Path(__file__).parent
 COUNTRY_MODULES_DIR = ROOT_DIR / "contryModules"
 OUTPUT_FILE = ROOT_DIR / "combined_data.csv"
-CREDENTIALS_FILE = ROOT_DIR / "credentials.txt"
+SECRETS_FILE = ROOT_DIR / "secrets.toml"
 MAX_CONCURRENT_SCRAPERS = 20  # Run up to 20 scrapers simultaneously
 
 # CSV fieldnames (standard across all scrapers)
@@ -175,15 +175,15 @@ def run_scraper(scraper_info):
 
 
 def load_anthropic_api_key():
-    """Load Anthropic API key from credentials.txt"""
+    """Load Anthropic API key from secrets.toml"""
     try:
-        with open(CREDENTIALS_FILE, 'r') as f:
-            for line in f:
-                if line.startswith('anthropicAPI='):
-                    return line.strip().split('=', 1)[1]
-    except:
+        import toml
+        with open(SECRETS_FILE, 'r') as f:
+            secrets = toml.load(f)
+            return secrets.get('anthropicAPI')
+    except Exception as e:
+        print(f"Error loading API key from secrets.toml: {e}")
         return None
-    return None
 
 
 def translate_batch_simple(client, texts, source_lang, target_lang):

@@ -12,16 +12,18 @@ from pathlib import Path
 import anthropic
 
 # Configuration
-CREDENTIALS_FILE = Path(__file__).parent / "credentials.txt"
+SECRETS_FILE = Path(__file__).parent / "secrets.toml"
 
 def load_anthropic_key():
-    """Load Anthropic API key from credentials.txt"""
-    if CREDENTIALS_FILE.exists():
-        with open(CREDENTIALS_FILE, 'r') as f:
-            for line in f:
-                if line.startswith('anthropicAPI='):
-                    return line.strip().split('=', 1)[1]
-    return os.getenv("ANTHROPIC_API_KEY")
+    """Load Anthropic API key from secrets.toml"""
+    try:
+        import toml
+        with open(SECRETS_FILE, 'r') as f:
+            secrets = toml.load(f)
+            return secrets.get('anthropicAPI')
+    except Exception as e:
+        print(f"Error loading API key from secrets.toml: {e}")
+        return os.getenv("ANTHROPIC_API_KEY")
 
 ANTHROPIC_API_KEY = load_anthropic_key()
 ANTHROPIC_MODEL = "claude-3-5-haiku-20241022"  # Haiku 3.5 - best available model

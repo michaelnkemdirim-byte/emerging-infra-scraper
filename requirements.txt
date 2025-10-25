@@ -8,6 +8,7 @@ feedparser>=6.0.10
 pandas>=2.0.0
 python-dateutil>=2.8.2
 pyyaml>=6.0
+toml>=0.10.2
 
 # AI/Translation/Categorization
 anthropic>=0.39.0
