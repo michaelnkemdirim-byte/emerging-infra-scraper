@@ -432,12 +432,17 @@ def translate_scraped_files(results):
 
 
 def combine_csv_files(results, output_file):
-    """Combine all *_en.csv files into a single output file"""
+    """Combine all *_en.csv files into a single output file (last 7 days only)"""
     print("\n" + "="*80)
-    print("COMBINING ENGLISH CSV FILES (*_en.csv)")
+    print("COMBINING ENGLISH CSV FILES (*_en.csv) - LAST 7 DAYS ONLY")
     print("="*80)
 
+    # Calculate 7 days ago threshold
+    from datetime import datetime, timedelta
+    seven_days_ago = datetime.now() - timedelta(days=7)
+
     total_records = 0
+    filtered_records = 0
 
     # Look for _en.csv files instead of regular _data.csv files
     csv_files = []
@@ -456,7 +461,7 @@ def combine_csv_files(results, output_file):
         print("No CSV files to combine!")
         return 0
 
-    print(f"Combining {len(csv_files)} CSV files...")
+    print(f"Combining {len(csv_files)} CSV files (filtering for last 7 days)...")
 
     with open(output_file, 'w', newline='', encoding='utf-8') as outfile:
         writer = csv.DictWriter(outfile, fieldnames=CSV_FIELDNAMES)
@@ -467,22 +472,37 @@ def combine_csv_files(results, output_file):
                 with open(csv_file, 'r', encoding='utf-8') as infile:
                     reader = csv.DictReader(infile)
                     records_written = 0
+                    records_skipped = 0
 
                     for row in reader:
+                        total_records += 1
+
+                        # Filter by date - only include last 7 days
+                        date_iso = row.get('date_iso', '')
+                        if date_iso:
+                            try:
+                                article_date = datetime.strptime(date_iso, '%Y-%m-%d')
+                                if article_date < seven_days_ago:
+                                    records_skipped += 1
+                                    continue  # Skip articles older than 7 days
+                            except:
+                                pass  # If date parsing fails, include the article
+
                         # Ensure all required fields are present
                         filtered_row = {field: row.get(field, '') for field in CSV_FIELDNAMES}
                         writer.writerow(filtered_row)
                         records_written += 1
-                        total_records += 1
+                        filtered_records += 1
 
                     en_marker = " [EN]" if "_en.csv" in csv_file.name else ""
-                    print(f"  ✓ {csv_file.parent.name}/{csv_file.name}{en_marker}: {records_written} records")
+                    skip_msg = f" ({records_skipped} older articles skipped)" if records_skipped > 0 else ""
+                    print(f"  ✓ {csv_file.parent.name}/{csv_file.name}{en_marker}: {records_written} records{skip_msg}")
 
             except Exception as e:
                 print(f"  ✗ Error reading {csv_file}: {e}")
 
-    print(f"\n✓ Combined {total_records} total records into {output_file}")
-    return total_records
+    print(f"\n✓ Combined {filtered_records} records from last 7 days (filtered out {total_records - filtered_records} older articles)")
+    return filtered_records
 
 
 def print_summary(results, total_elapsed):

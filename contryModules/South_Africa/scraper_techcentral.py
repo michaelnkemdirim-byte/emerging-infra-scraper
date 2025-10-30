@@ -192,7 +192,7 @@ def fetch_wordpress_posts(page: int = 1, per_page: int = 100) -> List[Dict]:
                 '_embed': 1  # Include embedded data
             }
 
-            response = requests.get(API_URL, params=params, headers=HEADERS, timeout=60)
+            response = requests.get(API_URL, params=params, headers=HEADERS, timeout=20)
             response.raise_for_status()
 
             return response.json()

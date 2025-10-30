@@ -23,8 +23,8 @@ NEWS_URL = f"{BASE_URL}/index.php/information-center/news-and-events.html"
 COUNTRY = "Kenya"
 SOURCE_NAME = "Kenya Electricity Generating Company (KenGen)"
 
-# Date filtering - Last 30 days only
-DATE_30_DAYS_AGO = datetime.now() - timedelta(days=30)
+# Date filtering - Last 7 days to match other scrapers
+DATE_7_DAYS_AGO = datetime.now() - timedelta(days=7)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -251,7 +251,7 @@ def discover_all_articles_via_pagination() -> List[str]:
     max_empty_pages = 3  # Stop after 3 consecutive empty pages
     empty_count = 0
 
-    while page_num < 200:  # Safety limit
+    while page_num < 20:  # Limit to 20 pages for speed
         print(f"  Scanning page {page_num + 1}...", end='\r')
 
         # Build page URL
@@ -348,11 +348,11 @@ def scrape_all_articles():
                 if article_data and article_data['title']:
                     # Deduplicate by URL and title
                     if article_data['url'] not in seen_urls and article_data['title'] not in seen_titles:
-                        # Filter by date - only include articles from last 30 days
+                        # Filter by date - only include articles from last 7 days
                         if article_data.get('date_iso'):
                             try:
                                 article_date = datetime.strptime(article_data['date_iso'], '%Y-%m-%d')
-                                if article_date >= DATE_30_DAYS_AGO:
+                                if article_date >= DATE_7_DAYS_AGO:
                                     seen_urls.add(article_data['url'])
                                     seen_titles.add(article_data['title'])
                                     all_data.append(article_data)

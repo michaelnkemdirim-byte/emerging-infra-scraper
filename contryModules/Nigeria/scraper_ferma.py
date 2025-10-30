@@ -22,8 +22,8 @@ API_URL = f"{BASE_URL}/wp-json/wp/v2/posts"
 COUNTRY = "Nigeria"
 SOURCE_NAME = "Federal Roads Maintenance Agency (FERMA)"
 
-# Date filtering - Last 30 days only
-DATE_FILTER_DAYS = 30
+# Date filtering - Last 7 days only
+DATE_FILTER_DAYS = 7
 DATE_AFTER = (datetime.now() - timedelta(days=DATE_FILTER_DAYS)).strftime('%Y-%m-%dT00:00:00')
 
 HEADERS = {
@@ -52,7 +52,7 @@ def fetch_posts_from_api(page: int = 1, per_page: int = 100) -> tuple:
             'page': page,
             'per_page': per_page,
             '_embed': 1,
-            'after': DATE_AFTER  # Only fetch posts from last 30 days
+            'after': DATE_AFTER  # Only fetch posts from last 7 days
         }
 
         response = requests.get(API_URL, params=params, headers=HEADERS, timeout=30, verify=False)

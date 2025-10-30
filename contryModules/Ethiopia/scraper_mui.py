@@ -18,9 +18,9 @@ import argparse
 BASE_URL = 'https://mui.gov.et'
 WP_API_URL = f'{BASE_URL}/wp-json/wp/v2/posts'
 
-# Date filter: last 30 days for weekly reports
-DATE_30_DAYS_AGO = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%dT%H:%M:%S')
-DATE_THRESHOLD = datetime.now() - timedelta(days=30)  # For client-side date validation
+# Date filter: last 7 days
+DATE_7_DAYS_AGO = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%S')
+DATE_THRESHOLD = datetime.now() - timedelta(days=7)  # For client-side date validation
 
 def clean_html(raw_html):
     """Remove HTML tags and clean text"""
@@ -38,7 +38,7 @@ def fetch_posts_from_api(page: int = 1, per_page: int = 100) -> tuple:
     params = {
         'page': page,
         'per_page': per_page,
-        'after': DATE_30_DAYS_AGO,
+        'after': DATE_7_DAYS_AGO,
         '_embed': 1  # Include embedded data (featured image, author, etc.)
     }
 
@@ -129,7 +129,7 @@ def scrape_mui():
     print("="*70)
     print("Scraping Ministry of Urban Infrastructure & Development (mui.gov.et)")
     print("="*70)
-    print(f"Fetching posts from last 30 days (after {DATE_30_DAYS_AGO[:10]})")
+    print(f"Fetching posts from last 30 days (after {DATE_7_DAYS_AGO[:10]})")
     print()
 
     all_data = []

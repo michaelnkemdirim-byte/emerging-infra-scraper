@@ -16,9 +16,9 @@ BASE_URL = "https://dailynews.co.tz"
 API_URL = f"{BASE_URL}/wp-json/wp/v2/posts"
 COUNTRY = "Tanzania"
 SOURCE_NAME = "Daily News Tanzania"
-DAYS_BACK = 30
+DAYS_BACK = 7  # Match other scrapers
 
-# Calculate date 30 days ago
+# Calculate date 7 days ago
 NOW = datetime.now()
 DATE_30_DAYS_AGO = (NOW - timedelta(days=DAYS_BACK)).strftime('%Y-%m-%dT00:00:00')
 DATE_THRESHOLD = NOW - timedelta(days=DAYS_BACK)  # For client-side date validation
@@ -98,7 +98,7 @@ def is_infrastructure_relevant(title: str, summary: str) -> bool:
 
 
 def scrape_all_posts() -> List[Dict]:
-    """Scrape all infrastructure posts from last 30 days"""
+    """Scrape all infrastructure posts from last 7 days"""
     print(f"Starting scraper for {SOURCE_NAME}")
     print("="*60)
     print(f"Collecting articles from last {DAYS_BACK} days")
@@ -108,6 +108,7 @@ def scrape_all_posts() -> List[Dict]:
 
     all_data = []
     seen_urls = set()
+    seen_titles = set()  # Fix: Add missing variable
 
     # Search for each keyword separately
     for keyword in SEARCH_KEYWORDS:

@@ -22,8 +22,8 @@ NEWS_LIST_URL = f"{BASE_URL}/news"
 COUNTRY = "Rwanda"
 SOURCE_NAME = "Ministry of Finance and Economic Planning"
 
-# Date filtering - Last 30 days only
-DATE_30_DAYS_AGO = datetime.now() - timedelta(days=30)
+# Date filtering - Last 7 days only
+DATE_7_DAYS_AGO = datetime.now() - timedelta(days=7)
 
 # Get current year and month
 NOW = datetime.now()
@@ -104,7 +104,7 @@ def fetch_news_list_page(page_num: int = 1) -> tuple:
                         'date_iso': date_str
                     })
 
-        # Remove duplicates and filter by date (last 30 days only)
+        # Remove duplicates and filter by date (last 7 days only)
         seen_urls = set()
         unique_articles = []
         for article in articles:
@@ -112,11 +112,11 @@ def fetch_news_list_page(page_num: int = 1) -> tuple:
                 seen_urls.add(article['url'])
 
                 seen_titles.add(article['title'])
-                # Filter by date - only include articles from last 30 days
+                # Filter by date - only include articles from last 7 days
                 if article.get('date_iso'):
                     try:
                         article_date = datetime.strptime(article['date_iso'], '%Y-%m-%d')
-                        if article_date >= DATE_30_DAYS_AGO:
+                        if article_date >= DATE_7_DAYS_AGO:
                             unique_articles.append(article)
                     except:
                         # If date parsing fails, include for manual review

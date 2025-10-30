@@ -22,9 +22,10 @@ API_URL = f"{BASE_URL}/wp-json/wp/v2/posts"
 COUNTRY = "Ghana"
 SOURCE_NAME = "Citi Newsroom"
 
-# Date filtering - Last 30 days only
+# Date filtering - Last 7 days only
 DATE_FILTER_DAYS = 7
 DATE_AFTER = (datetime.now() - timedelta(days=DATE_FILTER_DAYS)).strftime('%Y-%m-%dT00:00:00')
+DATE_THRESHOLD = datetime.now() - timedelta(days=DATE_FILTER_DAYS)  # For client-side validation
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -272,6 +273,16 @@ def scrape_all_posts():
             try:
                 result = future.result()
                 if result:
+                    # Client-side date validation - skip if older than 7 days
+                    if result.get('date_iso'):
+                        try:
+                            article_date = datetime.strptime(result['date_iso'], '%Y-%m-%d')
+                            if article_date < DATE_THRESHOLD:
+                                skipped += 1
+                                continue
+                        except:
+                            pass  # If date parsing fails, include for manual review
+
                     # Deduplicate by URL and title
                     if result['url'] not in seen_urls and result['title'] not in seen_titles:
                         seen_urls.add(result['url'])

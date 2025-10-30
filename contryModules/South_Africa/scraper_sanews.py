@@ -26,8 +26,8 @@ RSS_FEEDS = [
 COUNTRY = "South Africa"
 SOURCE_NAME = "SA News"
 
-# Date filtering - Last 30 days only
-DATE_30_DAYS_AGO = datetime.now() - timedelta(days=30)
+# Date filtering - Last 7 days only
+DATE_7_DAYS_AGO = datetime.now() - timedelta(days=7)
 
 # Comprehensive infrastructure keywords for filtering
 SEARCH_KEYWORDS = [
@@ -309,11 +309,11 @@ def scrape_all_feeds():
         for idx, item in enumerate(items, 1):
             result = process_rss_item(item, seen_urls)
             if result:
-                # Filter by date - only include articles from last 30 days
+                # Filter by date - only include articles from last 7 days
                 if result.get('date_iso'):
                     try:
                         article_date = datetime.strptime(result['date_iso'], '%Y-%m-%d')
-                        if article_date >= DATE_30_DAYS_AGO:
+                        if article_date >= DATE_7_DAYS_AGO:
                             all_data.append(result)
                     except:
                         # If date parsing fails, include for manual review

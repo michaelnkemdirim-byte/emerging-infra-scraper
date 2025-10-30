@@ -22,12 +22,12 @@ API_URL = f"{BASE_URL}/wp-json/wp/v2/posts"
 COUNTRY = "South Africa"
 SOURCE_NAME = "Infrastructure News"
 
-# Get current date and calculate 30 days ago
+# Get current date and calculate 7 days ago
 NOW = datetime.now()
 CURRENT_YEAR = NOW.year
 CURRENT_MONTH = NOW.month
-DAYS_BACK = 30  # Only fetch articles from last 30 days
-DATE_30_DAYS_AGO = (NOW - timedelta(days=DAYS_BACK)).strftime('%Y-%m-%dT00:00:00')
+DAYS_BACK = 7  # Only fetch articles from last 7 days
+DATE_7_DAYS_AGO = (NOW - timedelta(days=DAYS_BACK)).strftime('%Y-%m-%dT00:00:00')
 
 # Comprehensive infrastructure keywords for filtering
 SEARCH_KEYWORDS = [
@@ -174,7 +174,7 @@ def fetch_posts_from_api(page: int = 1, per_page: int = 100) -> tuple:
             'page': page,
             'per_page': per_page,
             '_embed': 1,
-            'after': DATE_30_DAYS_AGO  # Only fetch posts from last 30 days
+            'after': DATE_7_DAYS_AGO  # Only fetch posts from last 30 days
         }
 
         response = requests.get(API_URL, params=params, headers=HEADERS, timeout=30, verify=False)
@@ -241,7 +241,7 @@ def scrape_all_posts():
     print(f"Starting scraper for {SOURCE_NAME}")
     print("="*60)
     print(f"Collecting articles from last {DAYS_BACK} days")
-    print(f"Date filter: {DATE_30_DAYS_AGO} to present")
+    print(f"Date filter: {DATE_7_DAYS_AGO} to present")
     print("="*60)
 
     # Step 1: Get first page to determine total pages

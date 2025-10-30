@@ -16,11 +16,11 @@ from patchright.async_api import async_playwright
 BASE_URL = "https://www.engineeringnews.co.za"
 COUNTRY = "South Africa"
 SOURCE_NAME = "Engineering News"
-DAYS_BACK = 30
+DAYS_BACK = 7
 
-# Calculate date 30 days ago
+# Calculate date 7 days ago
 NOW = datetime.now()
-DATE_30_DAYS_AGO = NOW - timedelta(days=DAYS_BACK)
+DATE_7_DAYS_AGO = NOW - timedelta(days=DAYS_BACK)
 
 # Categories to scrape - AI will determine final categories
 # Removed broken categories: construction, roads, economy (network errors)
@@ -54,13 +54,13 @@ def parse_date_from_url(url: str) -> str:
     return ""
 
 
-def is_within_30_days(date_str: str) -> bool:
-    """Check if date is within last 30 days"""
+def is_within_7_days(date_str: str) -> bool:
+    """Check if date is within last 7 days"""
     if not date_str:
         return False
     try:
         article_date = datetime.strptime(date_str, '%Y-%m-%d')
-        return article_date >= DATE_30_DAYS_AGO
+        return article_date >= DATE_7_DAYS_AGO
     except:
         return False
 
@@ -103,8 +103,8 @@ async def scrape_category(page, category: str, our_category: str) -> List[Dict[s
                 # Extract date from URL
                 date_iso = parse_date_from_url(href)
 
-                # Filter: only last 30 days
-                if not is_within_30_days(date_iso):
+                # Filter: only last 7 days
+                if not is_within_7_days(date_iso):
                     continue
 
                 # Get summary from parent element
@@ -139,7 +139,7 @@ async def scrape_category(page, category: str, our_category: str) -> List[Dict[s
             except Exception as e:
                 continue
 
-        print(f"    Collected {len(articles_data)} articles from last 30 days")
+        print(f"    Collected {len(articles_data)} articles from last 7 days")
         return articles_data
 
     except Exception as e:
@@ -152,7 +152,7 @@ async def scrape_all_categories():
     print(f"Starting Patchright scraper for {SOURCE_NAME}")
     print("="*60)
     print(f"Collecting articles from last {DAYS_BACK} days")
-    print(f"Date filter: {DATE_30_DAYS_AGO.strftime('%Y-%m-%d')} to present")
+    print(f"Date filter: {DATE_7_DAYS_AGO.strftime('%Y-%m-%d')} to present")
     print("="*60)
 
     async with async_playwright() as p:

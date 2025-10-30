@@ -18,7 +18,7 @@ from tqdm import tqdm
 # Configuration
 API_BASE_URL = 'https://leconomistedufaso.com/wp-json/wp/v2/posts'
 MAX_WORKERS = 15
-DATE_FILTER_DAYS = 30
+DATE_FILTER_DAYS = 7
 DATE_AFTER = (datetime.now() - timedelta(days=DATE_FILTER_DAYS)).strftime('%Y-%m-%dT00:00:00')
 
 # French keywords mapped to categories

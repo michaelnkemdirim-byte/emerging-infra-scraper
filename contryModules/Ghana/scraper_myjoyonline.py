@@ -22,7 +22,7 @@ API_URL = f"{BASE_URL}/wp-json/wp/v2/posts"
 COUNTRY = "Ghana"
 SOURCE_NAME = "MyJoyOnline"
 
-# Date filtering - Last 30 days only
+# Date filtering - Last 7 days only
 DATE_FILTER_DAYS = 7
 DATE_AFTER = (datetime.now() - timedelta(days=DATE_FILTER_DAYS)).strftime('%Y-%m-%dT00:00:00')
 

@@ -133,12 +133,15 @@ with st.sidebar:
     This dashboard displays infrastructure news articles scraped from official government portals,
     international development banks, and news sources across 8 African countries.
 
+    **📅 Data Coverage:** Last 7 days
+
     **Data Pipeline:**
-    - Automated web scraping from 29+ sources
+    - Automated web scraping from 44+ sources
     - French/Amharic to English translation
-    - AI-powered categorization (Claude Haiku 3.5)
+    - AI-powered categorization (Claude Sonnet 4.5)
     - URL + Title deduplication
     - Infrastructure-only filtering
+    - Date filtering (last 7 days)
 
     **Categories:**
     - **Port**: Maritime, shipping, airport infrastructure
@@ -146,6 +149,9 @@ with st.sidebar:
     - **Highway**: Roads, highways, bridges
     - **SEZ**: Special Economic Zones, industrial parks
     - **Smart City**: Digital infrastructure, urban tech
+    - **Economic**: Finance, trade, banking, crypto, investment
+    - **Energy**: Solar, wind, hydro, nuclear, power plants
+    - **Technology**: ICT, telecom, broadband, digital projects
     - **Infrastructure**: General infrastructure projects
     """)
 
@@ -174,16 +180,48 @@ def load_data():
     if not DATA_FILE.exists():
         return None
 
-    df = pd.read_csv(DATA_FILE)
+    try:
+        # Read CSV with error handling
+        df = pd.read_csv(
+            DATA_FILE,
+            on_bad_lines='skip',  # Skip malformed lines
+            encoding='utf-8',
+            skipinitialspace=True  # Handle extra spaces
+        )
 
-    # Convert date_iso to datetime
-    if 'date_iso' in df.columns:
-        df['date_iso'] = pd.to_datetime(df['date_iso'], errors='coerce')
+        # Strip whitespace from column names
+        df.columns = df.columns.str.strip()
 
-    return df
+        # Decode HTML entities in text columns
+        import html
+        for col in ['title', 'summary']:
+            if col in df.columns:
+                df[col] = df[col].astype(str).apply(lambda x: html.unescape(x) if pd.notna(x) else x)
+
+        # Convert date_iso to datetime
+        if 'date_iso' in df.columns:
+            df['date_iso'] = pd.to_datetime(df['date_iso'], errors='coerce')
+
+        return df
+    except Exception as e:
+        st.error(f"Error loading CSV file: {e}")
+        return None
 
 # Load the data
 df = load_data()
+
+# Filter to last 7 days only
+if df is not None and len(df) > 0:
+    if 'date_iso' in df.columns:
+        # Calculate 7 days ago
+        seven_days_ago = dt.datetime.now() - dt.timedelta(days=7)
+
+        # Filter dataframe to keep only last 7 days
+        df['date_iso'] = pd.to_datetime(df['date_iso'], errors='coerce')
+        df = df[df['date_iso'] >= seven_days_ago]
+
+        # Reset index after filtering
+        df = df.reset_index(drop=True)
 
 # Check if data exists
 if df is None or len(df) == 0:
@@ -266,27 +304,35 @@ if 'date_iso' in df.columns:
     df_timeline['date'] = pd.to_datetime(df_timeline['date_iso'], errors='coerce')
     df_timeline = df_timeline.dropna(subset=['date'])
 
-    # Count articles per day
-    timeline_counts = df_timeline.groupby(df_timeline['date'].dt.date).size().reset_index()
-    timeline_counts.columns = ['date', 'count']
+    if len(df_timeline) > 0:
+        # Count articles per day
+        timeline_counts = df_timeline.groupby(df_timeline['date'].dt.date).size().reset_index()
+        timeline_counts.columns = ['date', 'count']
 
-    # Interactive line chart
-    fig_timeline = px.line(
-        timeline_counts,
-        x='date',
-        y='count',
-        labels={'count': 'Number of Articles', 'date': 'Date'},
-        markers=True,
-        height=300
-    )
-    fig_timeline.update_traces(line_color='#1f77b4', line_width=2, marker=dict(size=6))
-    fig_timeline.update_layout(
-        margin=dict(l=0, r=0, t=10, b=0),
-        xaxis_title='',
-        yaxis_title='Articles Published',
-        hovermode='x unified'
-    )
-    st.plotly_chart(fig_timeline, use_container_width=True)
+        # Show date range info
+        date_min = df_timeline['date'].min().strftime('%Y-%m-%d')
+        date_max = df_timeline['date'].max().strftime('%Y-%m-%d')
+        st.caption(f"📅 Date range: {date_min} to {date_max}")
+
+        # Interactive line chart
+        fig_timeline = px.line(
+            timeline_counts,
+            x='date',
+            y='count',
+            labels={'count': 'Number of Articles', 'date': 'Date'},
+            markers=True,
+            height=300
+        )
+        fig_timeline.update_traces(line_color='#1f77b4', line_width=2, marker=dict(size=6))
+        fig_timeline.update_layout(
+            margin=dict(l=0, r=0, t=10, b=0),
+            xaxis_title='',
+            yaxis_title='Articles Published',
+            hovermode='x unified'
+        )
+        st.plotly_chart(fig_timeline, use_container_width=True)
+    else:
+        st.info("No dated articles available for timeline chart")
 else:
     st.warning("No date information available for timeline chart")
 

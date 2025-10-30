@@ -18,8 +18,8 @@ import argparse
 BASE_URL = 'https://capitalethiopia.com'
 WP_API_URL = f'{BASE_URL}/wp-json/wp/v2/posts'
 
-# Date filter: last 30 days for weekly reports
-DATE_30_DAYS_AGO = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%dT%H:%M:%S')
+# Date filter: last 7 days
+DATE_7_DAYS_AGO = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%S')
 
 # Search keywords for infrastructure content
 SEARCH_KEYWORDS = [
@@ -118,7 +118,7 @@ def fetch_posts_for_keyword(keyword: str, page: int = 1, per_page: int = 100) ->
         'search': keyword,
         'page': page,
         'per_page': per_page,
-        'after': DATE_30_DAYS_AGO,
+        'after': DATE_7_DAYS_AGO,
         '_embed': 1
     }
 
@@ -185,7 +185,7 @@ def scrape_capitalethiopia():
     print("="*70)
     print("Scraping Capital Ethiopia (capitalethiopia.com)")
     print("="*70)
-    print(f"Fetching posts from last 30 days (after {DATE_30_DAYS_AGO[:10]})")
+    print(f"Fetching posts from last 7 days (after {DATE_7_DAYS_AGO[:10]})")
     print(f"Searching with {len(SEARCH_KEYWORDS)} infrastructure keywords")
     print()
 

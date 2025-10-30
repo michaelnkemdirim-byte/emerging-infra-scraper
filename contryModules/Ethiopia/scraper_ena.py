@@ -19,8 +19,8 @@ from tqdm import tqdm
 SEARCH_BASE_URL = 'https://www.ena.et/web/eng/search'
 MAX_WORKERS = 15  # Parallel workers
 
-# Date filter: last 90 days (ENA has limited recent infrastructure news)
-DATE_30_DAYS_AGO = datetime.now() - timedelta(days=30)
+# Date filter: last 7 days (ENA has limited recent infrastructure news)
+DATE_7_DAYS_AGO = datetime.now() - timedelta(days=7)
 
 # Search keywords mapped to categories
 KEYWORD_CATEGORY_MAP = {
@@ -241,7 +241,7 @@ def scrape_ena():
     print("Scraping Ethiopian News Agency (ENA)")
     print("="*70)
     print(f"Using {MAX_WORKERS} parallel workers")
-    print(f"Date range: Last 90 days (after {DATE_30_DAYS_AGO.strftime('%Y-%m-%d')})")
+    print(f"Date range: Last 90 days (after {DATE_7_DAYS_AGO.strftime('%Y-%m-%d')})")
     print()
 
     # PHASE 1: Search all keywords and collect URLs
@@ -305,7 +305,7 @@ def scrape_ena():
                         if date_published:
                             try:
                                 article_date = datetime.strptime(date_published, '%Y-%m-%d')
-                                if article_date < DATE_30_DAYS_AGO:
+                                if article_date < DATE_7_DAYS_AGO:
                                     pbar.update(1)
                                     continue
                             except:

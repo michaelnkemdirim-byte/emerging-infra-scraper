@@ -18,8 +18,8 @@ API_BASE = f"{BASE_URL}/wp-json/wp/v2"
 COUNTRY = "Ghana"
 SOURCE_NAME = "Ghana Civil Aviation Authority"
 
-# Date filtering - Last 30 days only
-DATE_FILTER_DAYS = 30
+# Date filtering - Last 7 days only
+DATE_FILTER_DAYS = 7
 DATE_AFTER = (datetime.now() - timedelta(days=DATE_FILTER_DAYS)).strftime('%Y-%m-%dT00:00:00')
 
 # Status detection keywords
