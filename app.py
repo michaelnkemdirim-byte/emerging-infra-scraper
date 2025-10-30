@@ -346,14 +346,14 @@ filter_col1, filter_col2 = st.columns(2)
 with filter_col1:
     country_filter = st.multiselect(
         "Filter by Country",
-        options=sorted(df['country'].unique()),
+        options=sorted(df['country'].dropna().unique()),
         default=[]
     )
 
 with filter_col2:
     category_filter = st.multiselect(
         "Filter by Category",
-        options=sorted(df['category'].unique()),
+        options=sorted(df['category'].dropna().unique()),
         default=[]
     )
 
