@@ -301,15 +301,21 @@ def scrape_ena():
                     if details:
                         date_published = details['date_published']
 
-                        # Date filter
-                        if date_published:
-                            try:
-                                article_date = datetime.strptime(date_published, '%Y-%m-%d')
-                                if article_date < DATE_7_DAYS_AGO:
-                                    pbar.update(1)
-                                    continue
-                            except:
-                                pass
+                        # Skip articles without valid dates
+                        if not date_published:
+                            pbar.update(1)
+                            continue
+
+                        # Date filter - validate and check if within 7 days
+                        try:
+                            article_date = datetime.strptime(date_published, '%Y-%m-%d')
+                            if article_date < DATE_7_DAYS_AGO:
+                                pbar.update(1)
+                                continue
+                        except:
+                            # Invalid date format - skip article
+                            pbar.update(1)
+                            continue
 
                         # Deduplicate by URL and title
                         if details['url'] not in seen_urls and details['title'] not in seen_titles:
