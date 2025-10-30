@@ -2,56 +2,63 @@
 """
 Scraper for Faso7 (Burkina Faso)
 Website: https://faso7.com
-Method: WordPress REST API with keyword search
+Method: WordPress REST API with Patchright (bypasses CAPTCHA)
 """
 
-import requests
+from patchright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 import csv
 from datetime import datetime, timedelta
 from html import unescape
 import argparse
-import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from tqdm import tqdm
+import json
+import time
+import warnings
+
+# Suppress BeautifulSoup warnings
+warnings.filterwarnings('ignore', category=UserWarning, module='bs4')
 
 # Configuration
 API_BASE_URL = 'https://faso7.com/wp-json/wp/v2/posts'
-MAX_WORKERS = 15
-DATE_FILTER_DAYS = 30
+DATE_FILTER_DAYS = 7  # Changed to 7 days to match other scrapers
 DATE_AFTER = (datetime.now() - timedelta(days=DATE_FILTER_DAYS)).strftime('%Y-%m-%dT00:00:00')
 
-# French keywords mapped to categories
-KEYWORD_CATEGORY_MAP = {
-    # Port category
-    'port': 'port',
-    'corridor': 'port',
+# Comprehensive keyword list (French) based on project requirements
+KEYWORDS = [
+    # Infrastructure - Transportation
+    'infrastructure', 'route', 'autoroute', 'pont', 'transport',
+    'port', 'corridor', 'maritime',
+    'chemin de fer', 'ferroviaire', 'train',
+    'aéroport', 'aviation',
 
-    # Rail category
-    'chemin de fer': 'rail',
-    'ferroviaire': 'rail',
-    'train': 'rail',
+    # Infrastructure - Industrial & Urban Development
+    'zone industrielle', 'parc industriel', 'industrialisation',
+    'ville intelligente', 'développement urbain',
+    'construction',
 
-    # Highway category
-    'route': 'highway',
-    'autoroute': 'highway',
-    'pont': 'highway',
+    # Infrastructure - Utilities
+    'eau', 'assainissement', 'barrage',
 
-    # Industrial zone category
-    'zone industrielle': 'industrial zone',
-    'parc industriel': 'industrial zone',
-    'industrialisation': 'industrial zone',
+    # Economic - Finance & Trade
+    'finance', 'bancaire', 'banque', 'commerce', 'économie', 'économique',
+    'investissement', 'exportation', 'importation',
+    'fintech', 'mobile money', 'bourse',
+    'crypto', 'cryptomonnaie', 'blockchain', 'bitcoin',
 
-    # Smart city category
-    'ville intelligente': 'smart city',
-    'développement urbain': 'smart city',
-    'numérique': 'smart city',
+    # Energy
+    'énergie', 'électricité', 'centrale électrique',
+    'solaire', 'éolien', 'hydroélectrique',
+    'énergie renouvelable', 'géothermie',
+    'nucléaire', 'thermique',
+    'pétrole', 'gaz',
 
-    # General infrastructure
-    'infrastructure': 'Infrastructure',
-    'construction': 'Infrastructure',
-    'transport': 'Infrastructure',
-}
+    # Technology
+    'technologie', 'numérique', 'digital',
+    'télécommunications', 'télécom', '5g', '4g',
+    'internet', 'fibre optique', 'centre de données',
+    'tic', 'innovation', 'startup',
+    'cybersécurité', 'e-gouvernement', 'transformation digitale'
+]
 
 def clean_html(raw_html):
     """Remove HTML tags and clean text"""
@@ -61,103 +68,26 @@ def clean_html(raw_html):
     text = soup.get_text(separator=' ', strip=True)
     return unescape(text)
 
-def has_standalone_port(text):
-    """
-    Check if 'port' appears as a standalone word (not embedded in other words)
-
-    Returns True if standalone 'port' is found
-    Returns False if 'port' only appears embedded in words like sport, transport, rapport
-    Returns None if 'port' doesn't appear at all (ambiguous - keep for manual review)
-    """
-    if not text:
-        return None
-
-    text_lower = text.lower()
-
-    # If "port" doesn't appear at all, return None (ambiguous - let it pass)
-    if 'port' not in text_lower:
-        return None
-
-    # Check for standalone "port" with word boundaries
-    standalone_pattern = r'\bport\b'
-
-    if re.search(standalone_pattern, text_lower):
-        return True  # Found standalone "port"
-
-    # If we get here, "port" only appears embedded in other words
-    return False
-
-def search_faso7(keyword: str) -> list:
-    """Search Faso7 WordPress API for a keyword"""
+def fetch_with_playwright(url, page, first_request=False):
+    """Fetch URL using Playwright and return JSON data"""
     try:
-        params = {
-            'search': keyword,
-            'after': DATE_AFTER,
-            'per_page': 100,
-            '_fields': 'id,link,title'
-        }
+        page.goto(url, wait_until='networkidle', timeout=20000)
 
-        response = requests.get(API_BASE_URL, params=params, timeout=15)
-        if response.status_code != 200:
-            return []
-
-        data = response.json()
-        articles = []
-
-        for item in data:
-            article_id = item.get('id')
-            url = item.get('link', '')
-            title_raw = item.get('title', {}).get('rendered', '')
-            title = clean_html(title_raw)
-
-            if url and title and article_id:
-                articles.append({'url': url, 'link_title': title, 'article_id': article_id})
-
-        return articles
-
-    except Exception as e:
-        print(f"  Error searching '{keyword}': {str(e)[:100]}")
-        return []
-
-def scrape_article(article_id: int, url: str, link_title: str) -> dict:
-    """Scrape individual article from Faso7"""
-    try:
-        # Fetch full article details from API using article ID
-        article_url = f"https://faso7.com/wp-json/wp/v2/posts/{article_id}?_fields=id,title,date,link,excerpt,content"
-
-        response = requests.get(article_url, timeout=15)
-        if response.status_code != 200:
-            return None
-
-        data = response.json()
-
-        # Parse date
-        date_str = data.get('date', '')
-        date_iso = date_str.split('T')[0] if 'T' in date_str else ''
-
-        # Clean title
-        title_raw = data.get('title', {}).get('rendered', '')
-        title = clean_html(title_raw)
-
-        # Clean excerpt/content for summary
-        excerpt_raw = data.get('excerpt', {}).get('rendered', '')
-        content_raw = data.get('content', {}).get('rendered', '')
-
-        # Prefer excerpt, fall back to content
-        if excerpt_raw:
-            summary = clean_html(excerpt_raw)
+        # Wait for CAPTCHA auto-solve (only on first request)
+        if first_request:
+            time.sleep(5)  # 5 seconds for first page to load
         else:
-            summary = clean_html(content_raw)
+            time.sleep(1)  # 1 second wait for subsequent requests
 
-        if len(summary) > 500:
-            summary = summary[:497] + '...'
+        # Get page content
+        content = page.evaluate('() => document.body.innerText')
 
-        return {
-            'url': data.get('link', url),
-            'title': title if title else link_title,
-            'date_published': date_iso,
-            'summary': summary
-        }
+        # Parse JSON
+        try:
+            data = json.loads(content)
+            return data
+        except json.JSONDecodeError:
+            return None
 
     except Exception as e:
         return None
@@ -165,138 +95,93 @@ def scrape_article(article_id: int, url: str, link_title: str) -> dict:
 def scrape_faso7():
     """Main scraping function for Faso7"""
     print("="*70)
-    print("Scraping Faso7 (Burkina Faso)")
+    print("Scraping Faso7 (Burkina Faso) with Patchright")
     print("="*70)
-    print(f"Using {MAX_WORKERS} parallel workers")
     print(f"Date range: Last {DATE_FILTER_DAYS} days (after {DATE_AFTER.split('T')[0]})")
     print()
 
-    # PHASE 1: Search all keywords and collect URLs
-    print("PHASE 1: Searching all keywords...")
-    print("-" * 70)
-
-    url_to_category = {}
-    total_found = 0
-
-    for keyword, category in KEYWORD_CATEGORY_MAP.items():
-        print(f"  [{keyword}] → {category}...", end=" ")
-        articles = search_faso7(keyword)
-        print(f"found {len(articles)}")
-        total_found += len(articles)
-
-        # Map URLs to categories (first occurrence wins)
-        for article in articles:
-            url = article['url']
-            if url not in url_to_category:
-                url_to_category[url] = {
-                    'category': category,
-                    'link_title': article['link_title'],
-                    'article_id': article['article_id']
-                }
-
-    unique_urls = list(url_to_category.keys())
-
-    print("-" * 70)
-    print(f"Search complete: {total_found} total, {len(unique_urls)} unique URLs")
-    print()
-
-    # PHASE 2: Scrape all unique articles in parallel
-    print("PHASE 2: Scraping all articles in parallel...")
-    print("-" * 70)
-
-    articles_to_scrape = [
-        {'url': url, 'link_title': info['link_title'], 'category': info['category'], 'article_id': info['article_id']}
-        for url, info in url_to_category.items()
-    ]
-
     all_data = []
-    seen_urls = set()  # Track URLs to avoid duplicates
-    seen_titles = set()  # Track titles to avoid duplicates
+    seen_urls = set()
 
-    # Scrape with progress bar
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_to_article = {
-            executor.submit(scrape_article, article['article_id'], article['url'], article['link_title']): article
-            for article in articles_to_scrape
-        }
+    with sync_playwright() as p:
+        # Launch browser with headless=False to bypass CAPTCHA
+        browser = p.chromium.launch(headless=False)
+        page = browser.new_page()  # Create one page to reuse
 
-        with tqdm(total=len(articles_to_scrape), desc="Scraping", unit="article") as pbar:
-            for future in as_completed(future_to_article):
-                article_info = future_to_article[future]
+        print("Searching keywords...")
+        print("-" * 70)
+
+        for idx, keyword in enumerate(KEYWORDS):
+            print(f"  Searching '{keyword}'...", end=" ", flush=True)
+
+            # Build API URL
+            url = f"{API_BASE_URL}?search={keyword}&after={DATE_AFTER}&per_page=20"
+
+            # Fetch data (first_request=True only for first keyword)
+            posts = fetch_with_playwright(url, page, first_request=(idx == 0))
+
+            if not posts or not isinstance(posts, list):
+                print("no results")
+                continue
+
+            print(f"found {len(posts)} posts")
+
+            # Process each post
+            for post in posts:
                 try:
-                    details = future.result()
-                    if details:
-                        # Deduplicate by URL
-                        if details['url'] not in seen_urls and details['title'] not in seen_titles:
-                            seen_urls.add(details['url'])
+                    article_url = post.get('link', '')
 
-                            seen_titles.add(details['title'])
+                    # Skip duplicates
+                    if article_url in seen_urls:
+                        continue
 
-                            article = {
-                                'country': 'Burkina Faso',
-                                'source': 'Faso7',
-                                'title': details['title'],
-                                'date_iso': details['date_published'],
-                                'summary': details['summary'],
-                                'url': details['url'],
-                                'category': article_info['category'],
-                                'status': ''
-                            }
+                    seen_urls.add(article_url)
 
-                            all_data.append(article)
+                    # Extract fields
+                    title_raw = post.get('title', {}).get('rendered', '')
+                    title = clean_html(title_raw)
+
+                    # Parse date
+                    date_str = post.get('date', '')
+                    date_iso = date_str.split('T')[0] if 'T' in date_str else ''
+
+                    # Get excerpt/content for summary
+                    excerpt_raw = post.get('excerpt', {}).get('rendered', '')
+                    content_raw = post.get('content', {}).get('rendered', '')
+
+                    if excerpt_raw:
+                        summary = clean_html(excerpt_raw)
+                    else:
+                        summary = clean_html(content_raw)
+
+                    if len(summary) > 500:
+                        summary = summary[:497] + '...'
+
+                    # Create article entry
+                    article = {
+                        'country': 'Burkina Faso',
+                        'source': 'Faso7',
+                        'title': title,
+                        'date_iso': date_iso,
+                        'summary': summary,
+                        'url': article_url,
+                        'category': '',  # Will be filled by AI
+                        'status': ''
+                    }
+
+                    all_data.append(article)
+
                 except Exception as e:
-                    pass
+                    continue
 
-                pbar.update(1)
+        page.close()  # Close the page after all searches
+        browser.close()
 
-    print()
-    print("="*70)
-    print(f"SUMMARY:")
-    print(f"  Total URLs found from searches: {total_found}")
-    print(f"  Unique URLs scraped: {len(unique_urls)}")
-    print(f"  Articles collected: {len(all_data)}")
-    print("="*70)
-
-    # Deduplicate by URL (final safety check)
-    unique_data = {}
-    for article in all_data:
-        url = article['url']
-        if url not in unique_data:
-            unique_data[url] = article
-
-    final_data = list(unique_data.values())
-    if len(final_data) < len(all_data):
-        print(f"Removed {len(all_data) - len(final_data)} duplicates")
-
-    # PHASE 3: Filter out false "port" matches
-    print()
-    print("PHASE 3: Filtering false 'port' matches...")
     print("-" * 70)
-
-    filtered_data = []
-    false_matches = 0
-
-    for article in final_data:
-        # Only filter "port" category articles
-        if article['category'] == 'port':
-            full_text = f"{article['title']} {article['summary']}"
-            result = has_standalone_port(full_text)
-
-            if result is False:
-                # False match - "port" only in embedded words like sport, transport
-                false_matches += 1
-                continue  # Skip this article
-
-        # Keep all other articles and legitimate/ambiguous port matches
-        filtered_data.append(article)
-
-    if false_matches > 0:
-        print(f"  Removed {false_matches} false 'port' matches (embedded in sport/transport/rapport/etc)")
-        print(f"  Kept {len(filtered_data)} articles ({len(final_data) - false_matches} total - {false_matches} false matches)")
-
+    print(f"Total unique articles collected: {len(all_data)}")
     print("="*70)
 
-    return filtered_data
+    return all_data
 
 def save_to_csv(data, output_file):
     """Save data to CSV file"""
@@ -316,9 +201,7 @@ def save_to_csv(data, output_file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scrape Faso7 for infrastructure news')
     parser.add_argument('--output', default='faso7_data.csv', help='Output CSV file')
-    parser.add_argument('--workers', type=int, default=15, help='Parallel workers (default: 15)')
     args = parser.parse_args()
 
-    MAX_WORKERS = args.workers
     data = scrape_faso7()
     save_to_csv(data, args.output)

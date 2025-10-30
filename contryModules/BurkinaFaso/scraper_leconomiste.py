@@ -47,6 +47,42 @@ KEYWORD_CATEGORY_MAP = {
     'développement urbain': 'smart city',
     'numérique': 'smart city',
 
+    # Economic category
+    'finance': 'economic',
+    'commerce': 'economic',
+    'économique': 'economic',
+    'crypto': 'economic',
+    'investissement': 'economic',
+    'fintech': 'economic',
+    'bourse': 'economic',
+    'marché financier': 'economic',
+    'bancaire': 'economic',
+    'exportation': 'economic',
+
+    # Energy category
+    'solaire': 'energy',
+    'éolien': 'energy',
+    'hydroélectrique': 'energy',
+    'centrale électrique': 'energy',
+    'électricité': 'energy',
+    'énergie renouvelable': 'energy',
+    'géothermie': 'energy',
+    'nucléaire': 'energy',
+    'thermique': 'energy',
+    'barrage': 'energy',
+
+    # Technology category
+    'technologie': 'technology',
+    'digital': 'technology',
+    'internet': 'technology',
+    'fibre optique': 'technology',
+    '5G': 'technology',
+    'centre de données': 'technology',
+    'e-gouvernement': 'technology',
+    'TIC': 'technology',
+    'cybersécurité': 'technology',
+    'télécommunications': 'technology',
+
     # General infrastructure
     'infrastructure': 'Infrastructure',
     'construction': 'Infrastructure',

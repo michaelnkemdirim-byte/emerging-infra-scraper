@@ -1,25 +1,33 @@
 #!/usr/bin/env python3
 """
-TanzaniaInvest - WordPress API Scraper
-Scrapes infrastructure, energy, technology, and economic news from tanzaniainvest.com
+Moneyweb - RSS Feed Scraper
+Scrapes financial, infrastructure, energy, and technology news from moneyweb.co.za
 """
 
 import requests
 import csv
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
 from html import unescape
 from bs4 import BeautifulSoup
 
 # Configuration
-BASE_URL = "https://www.tanzaniainvest.com"
-API_URL = f"{BASE_URL}/wp-json/wp/v2/posts"
-COUNTRY = "Tanzania"
-SOURCE_NAME = "TanzaniaInvest"
+BASE_URL = "https://www.moneyweb.co.za"
+COUNTRY = "South Africa"
+SOURCE_NAME = "Moneyweb"
 
 # Date filtering - Last 7 days only
 DAYS_BACK = 7
 DATE_FILTER = datetime.now() - timedelta(days=DAYS_BACK)
+
+# RSS Feed URLs by category
+RSS_FEEDS = {
+    'Main Feed': 'https://www.moneyweb.co.za/feed/',
+    'News': 'https://www.moneyweb.co.za/category/news/feed/',
+    'Economy': 'https://www.moneyweb.co.za/category/economy/feed/',
+    'Mineweb': 'https://www.moneyweb.co.za/category/mineweb/feed/'
+}
 
 # Comprehensive infrastructure keywords for filtering
 SEARCH_KEYWORDS = [
@@ -99,6 +107,9 @@ SEARCH_KEYWORDS = [
     'liquefied natural gas',
     'gas-to-power',
     'coal-to-power',
+    'eskom',
+    'load shedding',
+    'loadshedding',
 
     # Technology
     '5g',
@@ -149,20 +160,25 @@ def clean_html(text: str) -> str:
     return text
 
 
-def is_relevant_article(title: str, excerpt: str) -> bool:
+def is_relevant_article(title: str, description: str) -> bool:
     """Check if article contains relevant keywords"""
-    text = (title + ' ' + excerpt).lower()
+    text = (title + ' ' + description).lower()
     return any(keyword.lower() in text for keyword in SEARCH_KEYWORDS)
 
 
 def parse_date(date_str: str) -> str:
-    """Parse WordPress date to ISO format"""
+    """Parse RSS date to ISO format"""
     try:
-        # WordPress date format: "2025-10-29T16:54:03"
-        dt = datetime.strptime(date_str[:19], '%Y-%m-%dT%H:%M:%S')
+        # RSS date format: "Thu, 30 Oct 2025 02:08:33 +0000"
+        dt = datetime.strptime(date_str, '%a, %d %b %Y %H:%M:%S %z')
         return dt.strftime('%Y-%m-%d')
     except:
-        return ""
+        try:
+            # Alternative format without timezone
+            dt = datetime.strptime(date_str[:25], '%a, %d %b %Y %H:%M:%S')
+            return dt.strftime('%Y-%m-%d')
+        except:
+            return ""
 
 
 def is_within_date_range(date_str: str) -> bool:
@@ -176,38 +192,78 @@ def is_within_date_range(date_str: str) -> bool:
         return False
 
 
-def fetch_wordpress_posts(page: int = 1, per_page: int = 100) -> List[Dict]:
-    """Fetch posts from WordPress API"""
-    import time
+def scrape_rss_feed(feed_url: str, category_name: str) -> List[Dict[str, Any]]:
+    """Scrape a single RSS feed"""
+    print(f"\n  Scraping: {category_name}")
 
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            params = {
-                'page': page,
-                'per_page': per_page,
-                '_embed': 1  # Include embedded data
-            }
+    try:
+        response = requests.get(feed_url, headers=HEADERS, timeout=30)
+        response.raise_for_status()
 
-            response = requests.get(API_URL, params=params, headers=HEADERS, timeout=60)
-            response.raise_for_status()
+        # Parse XML
+        root = ET.fromstring(response.content)
 
-            return response.json()
-        except Exception as e:
-            if attempt < max_retries - 1:
-                wait_time = (attempt + 1) * 2
-                print(f"    Attempt {attempt + 1} failed, retrying in {wait_time}s...")
-                time.sleep(wait_time)
-            else:
-                print(f"    Error fetching page {page} after {max_retries} attempts: {e}")
-                return []
+        articles = []
+        items = root.findall('.//item')
 
-    return []
+        print(f"    Found {len(items)} items in feed")
+
+        for item in items:
+            try:
+                # Extract fields
+                title = item.find('title')
+                link = item.find('link')
+                description = item.find('description')
+                pub_date = item.find('pubDate')
+
+                if title is None or link is None:
+                    continue
+
+                title_text = clean_html(title.text) if title.text else ""
+                link_text = link.text.strip() if link.text else ""
+                desc_text = clean_html(description.text) if description is not None and description.text else ""
+                date_text = pub_date.text if pub_date is not None and pub_date.text else ""
+
+                # Parse date
+                date_iso = parse_date(date_text)
+
+                # Filter: only last 7 days
+                if not is_within_date_range(date_iso):
+                    continue
+
+                # Filter: check if relevant
+                if not is_relevant_article(title_text, desc_text):
+                    continue
+
+                # Create summary (prefer description, fallback to title)
+                summary = desc_text if len(desc_text) > 20 else title_text
+                summary = summary[:497] + "..." if len(summary) > 500 else summary
+
+                articles.append({
+                    'country': COUNTRY,
+                    'source': SOURCE_NAME,
+                    'title': title_text.replace(',', ' '),
+                    'date_iso': date_iso,
+                    'summary': summary.replace(',', ' ').replace('\n', ' '),
+                    'url': link_text,
+                    'category': '',  # Will be filled by AI
+                    'status': ''     # Will be filled by AI
+                })
+
+            except Exception as e:
+                continue
+
+        print(f"    Kept {len(articles)} relevant articles from last {DAYS_BACK} days")
+        return articles
+
+    except Exception as e:
+        print(f"    Error scraping {category_name}: {e}")
+        return []
 
 
-def scrape_tanzaniainvest():
-    """Scrape TanzaniaInvest WordPress API"""
-    print(f"Starting TanzaniaInvest WordPress API scraper")
+def scrape_all_feeds():
+    """Scrape all RSS feeds"""
+    print(f"Starting Moneyweb RSS scraper")
     print("=" * 60)
     print(f"Collecting articles from last {DAYS_BACK} days")
     print(f"Date filter: {DATE_FILTER.strftime('%Y-%m-%d')} to present")
@@ -215,83 +271,15 @@ def scrape_tanzaniainvest():
 
     all_data = []
     seen_urls = set()
-    page = 1
 
-    while True:
-        print(f"\n  Fetching page {page}...")
-        posts = fetch_wordpress_posts(page=page, per_page=100)
+    for category, feed_url in RSS_FEEDS.items():
+        articles = scrape_rss_feed(feed_url, category)
 
-        if not posts:
-            print(f"    No more posts found")
-            break
-
-        print(f"    Found {len(posts)} posts")
-
-        articles_this_page = 0
-        stop_pagination = False
-
-        for post in posts:
-            try:
-                # Extract fields
-                title_raw = post.get('title', {}).get('rendered', '')
-                title = clean_html(title_raw)
-
-                url = post.get('link', '')
-
-                excerpt_raw = post.get('excerpt', {}).get('rendered', '')
-                excerpt = clean_html(excerpt_raw)
-
-                date_str = post.get('date', '')
-                date_iso = parse_date(date_str)
-
-                # Check if we've gone too far back in time
-                if not is_within_date_range(date_iso):
-                    stop_pagination = True
-                    continue
-
-                # Skip duplicates
-                if url in seen_urls:
-                    continue
-
-                # Filter: check if relevant
-                if not is_relevant_article(title, excerpt):
-                    continue
-
-                seen_urls.add(url)
-
-                # Create summary (use excerpt, fallback to title)
-                summary = excerpt if len(excerpt) > 20 else title
-                summary = summary[:497] + "..." if len(summary) > 500 else summary
-
-                all_data.append({
-                    'country': COUNTRY,
-                    'source': SOURCE_NAME,
-                    'title': title.replace(',', ' '),
-                    'date_iso': date_iso,
-                    'summary': summary.replace(',', ' ').replace('\n', ' '),
-                    'url': url,
-                    'category': '',  # Will be filled by AI
-                    'status': ''     # Will be filled by AI
-                })
-
-                articles_this_page += 1
-
-            except Exception as e:
-                continue
-
-        print(f"    Kept {articles_this_page} relevant articles from this page")
-
-        # Stop if we've gone past our date range
-        if stop_pagination:
-            print(f"    Reached articles older than {DAYS_BACK} days, stopping pagination")
-            break
-
-        # Stop if no articles found on this page
-        if len(posts) < 100:
-            print(f"    Reached last page")
-            break
-
-        page += 1
+        # Deduplicate across feeds
+        for article in articles:
+            if article['url'] not in seen_urls:
+                seen_urls.add(article['url'])
+                all_data.append(article)
 
     print(f"\n\nTotal unique articles collected: {len(all_data)}")
     return all_data
@@ -337,13 +325,13 @@ def save_to_csv(data: List[Dict], output_file: str):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='Scrape TanzaniaInvest WordPress API')
-    parser.add_argument('--output', '-o', default='tanzaniainvest_data.csv', help='Output CSV file')
+    parser = argparse.ArgumentParser(description='Scrape Moneyweb RSS feeds')
+    parser.add_argument('--output', '-o', default='moneyweb_data.csv', help='Output CSV file')
 
     args = parser.parse_args()
 
     # Run scraper
-    data = scrape_tanzaniainvest()
+    data = scrape_all_feeds()
 
     # Save to CSV
     if data:

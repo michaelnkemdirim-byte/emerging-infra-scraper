@@ -33,10 +33,21 @@ HEADERS = {
 
 # Infrastructure keywords
 INFRASTRUCTURE_KEYWORDS = [
+    # Infrastructure
     'infrastructure', 'port', 'railway', 'rail', 'road', 'highway', 'bridge',
-    'power', 'electricity', 'energy', 'water', 'dam', 'airport', 'aviation',
-    'telecom', 'telecommunications', 'housing', 'sez', 'industrial park',
-    'free zone', 'smart city', 'construction', 'development project'
+    'water', 'housing', 'sez', 'industrial park', 'airport', 'aviation',
+    'free zone', 'smart city', 'construction', 'development project',
+    # Energy
+    'power', 'electricity', 'energy', 'dam', 'solar', 'wind farm', 'hydropower',
+    'renewable energy', 'geothermal', 'nuclear', 'thermal', 'grid', 'substation',
+    # Economic
+    'finance', 'trade', 'economic', 'crypto', 'investment', 'fintech',
+    'stock exchange', 'banking', 'commerce', 'export', 'capital market',
+    'privatization', 'privatisation',
+    # Technology
+    'telecom', 'telecommunications', 'digital', 'technology', 'broadband', '5G',
+    'data center', 'e-government', 'ICT', 'fiber optic', 'AI', 'cybersecurity',
+    'internet'
 ]
 
 # Exclude non-project content

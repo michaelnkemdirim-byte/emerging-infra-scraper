@@ -33,10 +33,20 @@ HEADERS = {
 
 # Railway/infrastructure keywords
 INFRASTRUCTURE_KEYWORDS = [
+    # Rail (primary focus)
     'railway', 'rail', 'train', 'sgr', 'station', 'track', 'locomotive',
     'passenger service', 'freight', 'cargo', 'metro', 'commuter',
     'infrastructure', 'construction', 'upgrade', 'rehabilitation',
-    'expansion', 'project', 'line', 'route', 'service', 'transport'
+    'expansion', 'project', 'line', 'route', 'service', 'transport',
+    # Economic
+    'finance', 'trade', 'economic', 'investment', 'fintech', 'banking',
+    'commerce', 'export', 'crypto', 'stock exchange',
+    # Energy
+    'solar', 'wind farm', 'hydropower', 'renewable energy', 'geothermal',
+    'power plant', 'electricity', 'grid', 'nuclear', 'thermal',
+    # Technology
+    'digital', 'technology', 'broadband', '5G', 'data center', 'e-government',
+    'ICT', 'fiber optic', 'AI', 'cybersecurity', 'telecommunications'
 ]
 
 # Exclude non-project content

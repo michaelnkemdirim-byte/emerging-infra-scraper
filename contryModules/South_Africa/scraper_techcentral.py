@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-TanzaniaInvest - WordPress API Scraper
-Scrapes infrastructure, energy, technology, and economic news from tanzaniainvest.com
+TechCentral - WordPress API Scraper
+Scrapes technology, infrastructure, and business news from techcentral.co.za
 """
 
 import requests
@@ -12,10 +12,10 @@ from html import unescape
 from bs4 import BeautifulSoup
 
 # Configuration
-BASE_URL = "https://www.tanzaniainvest.com"
+BASE_URL = "https://techcentral.co.za"
 API_URL = f"{BASE_URL}/wp-json/wp/v2/posts"
-COUNTRY = "Tanzania"
-SOURCE_NAME = "TanzaniaInvest"
+COUNTRY = "South Africa"
+SOURCE_NAME = "TechCentral"
 
 # Date filtering - Last 7 days only
 DAYS_BACK = 7
@@ -99,6 +99,9 @@ SEARCH_KEYWORDS = [
     'liquefied natural gas',
     'gas-to-power',
     'coal-to-power',
+    'eskom',
+    'load shedding',
+    'loadshedding',
 
     # Technology
     '5g',
@@ -205,9 +208,9 @@ def fetch_wordpress_posts(page: int = 1, per_page: int = 100) -> List[Dict]:
     return []
 
 
-def scrape_tanzaniainvest():
-    """Scrape TanzaniaInvest WordPress API"""
-    print(f"Starting TanzaniaInvest WordPress API scraper")
+def scrape_techcentral():
+    """Scrape TechCentral WordPress API"""
+    print(f"Starting TechCentral WordPress API scraper")
     print("=" * 60)
     print(f"Collecting articles from last {DAYS_BACK} days")
     print(f"Date filter: {DATE_FILTER.strftime('%Y-%m-%d')} to present")
@@ -337,13 +340,13 @@ def save_to_csv(data: List[Dict], output_file: str):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='Scrape TanzaniaInvest WordPress API')
-    parser.add_argument('--output', '-o', default='tanzaniainvest_data.csv', help='Output CSV file')
+    parser = argparse.ArgumentParser(description='Scrape TechCentral WordPress API')
+    parser.add_argument('--output', '-o', default='techcentral_data.csv', help='Output CSV file')
 
     args = parser.parse_args()
 
     # Run scraper
-    data = scrape_tanzaniainvest()
+    data = scrape_techcentral()
 
     # Save to CSV
     if data:

@@ -22,14 +22,24 @@ DAYS_BACK = 30
 NOW = datetime.now()
 DATE_30_DAYS_AGO = NOW - timedelta(days=DAYS_BACK)
 
-# Categories to scrape with mapping to our project categories
+# Categories to scrape - AI will determine final categories
+# Removed broken categories: construction, roads, economy (network errors)
 CATEGORIES = {
-    'infrastructure': 'Infrastructure',
-    'construction': 'Infrastructure',
-    'ports': 'port',
-    'rail': 'rail',
-    'roads': 'highway',
-    'transport': 'Infrastructure'
+    'infrastructure': '',
+    'ports': '',
+    'rail': '',
+    'transport': '',
+    'airports': '',
+    'aviation': '',
+    'water': '',
+    'energy': '',
+    'power': '',
+    'renewable-energy': '',
+    'mining': '',
+    'finance': '',
+    'technology': '',
+    'telecoms': '',
+    'ict': ''
 }
 
 

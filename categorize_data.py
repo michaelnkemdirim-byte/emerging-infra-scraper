@@ -26,12 +26,12 @@ def load_anthropic_key():
         return os.getenv("ANTHROPIC_API_KEY")
 
 ANTHROPIC_API_KEY = load_anthropic_key()
-ANTHROPIC_MODEL = "claude-3-5-haiku-20241022"  # Haiku 3.5 - best available model
-BATCH_SIZE = 20  # Categorize 20 articles per API call (smaller batches for better accuracy)
+ANTHROPIC_MODEL = "claude-sonnet-4-5-20250929"  # Sonnet 4.5 - most capable model
+BATCH_SIZE = 10  # Categorize 10 articles per API call (smaller batches for reliability)
 # No threading - sequential processing to respect rate limits
 
 # Categories
-CATEGORIES = ["NonInfra", "port", "rail", "highway", "SEZ", "smart city", "Infrastructure"]
+CATEGORIES = ["NonInfra", "port", "rail", "highway", "SEZ", "smart city", "economic", "energy", "technology", "Infrastructure"]
 
 
 def categorize_batch(client, articles_batch):
@@ -53,16 +53,22 @@ CATEGORIES (choose ONE per article):
 • rail: ONLY if mentions railways, trains, metro, rail tracks, stations, locomotives
 • highway: ONLY if mentions roads, highways, bridges, expressways, motorways
 • SEZ: ONLY if mentions Special Economic Zones, industrial parks, free trade zones
-• smart city: Digital infrastructure, e-government, fintech, urban tech, telecom, ICT systems
-• Infrastructure: Water/energy projects, housing, buildings, general construction, recycling, waste
-• NonInfra: NOT a project (HR news, awards, earnings, general announcements)
+• smart city: Smart city initiatives, digital infrastructure, e-government, urban tech
+• economic: Finance, trade, economy, crypto, investment, fintech, stock exchange, banking, commerce, export/import
+• energy: Solar, wind, hydropower, nuclear, thermal, renewable energy, power plants, electricity, grid, dams
+• technology: Technology projects, digital transformation, broadband, 5G, data centers, ICT, fiber optic, AI, cybersecurity, telecommunications
+• Infrastructure: Water projects, housing, buildings, general construction, recycling, waste
+• NonInfra: NOT a project (HR news, awards, earnings, general announcements) from above categories and NOT infrastructure-related and out of context
 
 CRITICAL RULES:
 - port/rail/highway/SEZ: Must have explicit keywords. If no clear keywords, use "Infrastructure"
-- smart city: Digital/tech systems, fintech, e-government, telecommunications
+- economic: Financial/trade projects, markets, banking, investment initiatives
+- energy: Power generation, renewable energy, electricity infrastructure
+- technology: Digital/ICT projects, telecom infrastructure, tech hubs
+- smart city: Urban development with digital/tech focus
 - Infrastructure: Default for any development project that doesn't clearly fit above categories
 - NonInfra: Only for non-project content (appointments, awards, earnings, generic news)
-- When in doubt: "Infrastructure" is safer than guessing port/rail/highway/SEZ
+- When in doubt: "Infrastructure" is safer than guessing specific categories
 
 ARTICLES:
 """
@@ -75,7 +81,7 @@ ARTICLES:
         prompt += f"\n[{i}] Title: {title}\nSummary: {summary[:500]}\n"
 
     prompt += f"""
-Return JSON array with {len(articles_batch)} categories. No explanations. Example: ["port", "Infrastructure", "NonInfra", "rail"]
+Return JSON array with {len(articles_batch)} categories. No explanations. Example: ["port", "economic", "energy", "technology", "Infrastructure"]
 
 ["""
 
@@ -88,17 +94,19 @@ Return JSON array with {len(articles_batch)} categories. No explanations. Exampl
             # Call Anthropic API with optimized settings
             response = client.messages.create(
                 model=ANTHROPIC_MODEL,
-                max_tokens=1000,  # Increased to ensure complete responses
+                max_tokens=2000,  # Increased to ensure complete responses
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.2,  # Slightly higher for better reasoning
-                top_p=0.9  # Better response diversity
+                temperature=0.2  # Slightly higher for better reasoning
             )
 
             # Check if we got a complete response
             try:
                 content = response.content[0].text.strip()
-                # Quick validation - if response looks incomplete, retry
-                if len(content) < 20 or not content.endswith(']'):
+                # Better validation - check for JSON array markers
+                has_opening_bracket = '[' in content
+                has_closing_bracket = ']' in content
+
+                if not (has_opening_bracket and has_closing_bracket):
                     if attempt < max_retries - 1:
                         print(f"  ⚠️  Incomplete response, retrying {attempt + 2}/{max_retries}...")
                         continue

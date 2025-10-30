@@ -23,6 +23,7 @@ DATE_30_DAYS_AGO = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%dT%H:%
 
 # Search keywords for infrastructure content
 SEARCH_KEYWORDS = [
+    # Infrastructure - Transportation
     'infrastructure',
     'construction',
     'road',
@@ -30,6 +31,9 @@ SEARCH_KEYWORDS = [
     'expressway',
     'railway',
     'port',
+    'airport',
+    'terminal',
+    'runway',
     'bridge',
     'industrial park',
     'special economic zone',
@@ -37,10 +41,52 @@ SEARCH_KEYWORDS = [
     'smart city',
     'urban development',
     'housing',
-    'electricity',
-    'power plant',
     'transmission',
-    'dam'
+    'dam',
+    # Infrastructure - Utilities
+    'water supply',
+    'sanitation',
+    'wastewater',
+    'sewage',
+    'water treatment',
+    'waste management',
+    'recycling',
+    # Economic
+    'finance',
+    'trade',
+    'economic',
+    'crypto',
+    'investment',
+    'fintech',
+    'stock exchange',
+    'capital market',
+    'banking',
+    'commerce',
+    'export',
+    # Energy
+    'solar',
+    'wind farm',
+    'hydropower',
+    'power plant',
+    'electricity',
+    'renewable energy',
+    'geothermal',
+    'nuclear',
+    'thermal',
+    'biomass',
+    'grid',
+    # Technology
+    'digital',
+    'technology',
+    'broadband',
+    '5G',
+    'data center',
+    'e-government',
+    'ICT',
+    'fiber optic',
+    'AI',
+    'cybersecurity',
+    'telecommunications'
 ]
 
 def clean_html(raw_html):

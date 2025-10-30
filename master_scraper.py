@@ -28,6 +28,7 @@ CSV_FIELDNAMES = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'c
 
 # Translation settings
 TRANSLATION_CONFIG = {
+    'BurkinaFaso/burkina24_data.csv': {'source_lang': 'french', 'target_lang': 'english'},
     'BurkinaFaso/faso7_data.csv': {'source_lang': 'french', 'target_lang': 'english'},
     'BurkinaFaso/gouvernement_data.csv': {'source_lang': 'french', 'target_lang': 'english'},
     'BurkinaFaso/leconomiste_data.csv': {'source_lang': 'french', 'target_lang': 'english'},
@@ -35,13 +36,17 @@ TRANSLATION_CONFIG = {
 }
 
 # Anthropic translation settings
-ANTHROPIC_MODEL = "claude-3-haiku-20240307"  # Most cost-effective for translation
+ANTHROPIC_MODEL = "claude-sonnet-4-5-20250929"  # Sonnet 4.5 - most capable model
 BATCH_SIZE = 25  # Process 25 texts per API call
 NUM_TRANSLATION_WORKERS = 1  # Sequential processing to respect rate limits
 
+# Categorization settings
+CATEGORIZATION_BATCH_SIZE = 15  # Process 15 articles per API call
+CATEGORIES = ['NonInfra', 'port', 'rail', 'highway', 'SEZ', 'smart city', 'Infrastructure']
+
 
 def discover_scrapers():
-    """Discover all scraper files in country modules"""
+    """Discover all scraper files in country modules with prioritized execution order"""
     scrapers = []
 
     for country_dir in sorted(COUNTRY_MODULES_DIR.iterdir()):
@@ -53,14 +58,44 @@ def discover_scrapers():
             scraper_name = scraper_file.stem.replace('scraper_', '')
             csv_output = country_dir / f"{scraper_name}_data.csv"
 
+            # Check if this is a Playwright/Patchright scraper (slower)
+            is_playwright = False
+            try:
+                with open(scraper_file, 'r', encoding='utf-8') as f:
+                    content = f.read(500)  # Check first 500 chars
+                    is_playwright = 'playwright' in content.lower() or 'patchright' in content.lower()
+            except:
+                pass
+
+            # Check if this needs translation
+            needs_translation = f"{country_dir.name}/{csv_output.name}" in TRANSLATION_CONFIG
+
             scrapers.append({
                 'country': country_dir.name,
                 'scraper_file': scraper_file,
                 'scraper_name': scraper_name,
                 'csv_output': csv_output,
-                'working_dir': country_dir
+                'working_dir': country_dir,
+                'is_playwright': is_playwright,
+                'needs_translation': needs_translation
             })
 
+    # Sort scrapers by priority:
+    # 1. BurkinaFaso scrapers first (need translation)
+    # 2. Playwright scrapers next (slowest)
+    # 3. Other translation scrapers (Ethiopia)
+    # 4. Everything else
+    def priority_key(s):
+        if s['country'] == 'BurkinaFaso':
+            return (0, s['scraper_name'])  # Highest priority
+        elif s['is_playwright']:
+            return (1, s['scraper_name'])  # Second priority
+        elif s['needs_translation']:
+            return (2, s['scraper_name'])  # Third priority
+        else:
+            return (3, s['scraper_name'])  # Normal priority
+
+    scrapers.sort(key=priority_key)
     return scrapers
 
 

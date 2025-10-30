@@ -31,6 +31,110 @@ NOW = datetime.now()
 CURRENT_YEAR = NOW.year
 CURRENT_MONTH = NOW.month
 
+# Comprehensive infrastructure keywords for filtering
+SEARCH_KEYWORDS = [
+    # Infrastructure - Transportation
+    'infrastructure',
+    'construction',
+    'road',
+    'highway',
+    'expressway',
+    'railway',
+    'port',
+    'airport',
+    'terminal',
+    'runway',
+    'bridge',
+    'industrial zone',
+    'free trade zone',
+    'logistics hub',
+    'container terminal',
+    'freight corridor',
+    'dry port',
+
+    # Infrastructure - Utilities
+    'water supply',
+    'sanitation',
+    'wastewater',
+    'sewage',
+    'water treatment',
+    'waste management',
+    'recycling',
+
+    # Infrastructure - Development
+    'smart city',
+    'sez',
+    'special economic zone',
+    'industrial park',
+
+    # Economic
+    'investment',
+    'finance',
+    'trade',
+    'export',
+    'import',
+    'cryptocurrency',
+    'crypto',
+    'blockchain',
+    'fintech',
+    'banking',
+    'economy',
+    'mobile money',
+    'remittances',
+    'venture capital',
+    'private equity',
+    'forex',
+    'foreign exchange',
+    'inflation',
+    'gdp',
+
+    # Energy
+    'power',
+    'electricity',
+    'energy',
+    'solar',
+    'renewable',
+    'thermal power',
+    'nuclear',
+    'wind power',
+    'hydroelectric',
+    'biofuel',
+    'bioenergy',
+    'geothermal',
+    'battery storage',
+    'grid infrastructure',
+    'ppa',
+    'power purchase agreement',
+    'lng',
+    'liquefied natural gas',
+    'gas-to-power',
+    'coal-to-power',
+
+    # Technology
+    '5g',
+    'broadband',
+    'fiber',
+    'internet',
+    'telecom',
+    'ai',
+    'artificial intelligence',
+    'digital',
+    'cybersecurity',
+    'data center',
+    'iot',
+    'internet of things',
+    'cloud computing',
+    'mobile banking',
+    'satellite internet',
+    'starlink',
+    'e-commerce',
+    'digital payments',
+    'biometric',
+    'digital id',
+    'drone',
+    'api'
+]
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
                   "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
@@ -57,6 +161,12 @@ def parse_date(date_str: str) -> str:
         return date_obj.strftime('%Y-%m-%d')
     except:
         return ""
+
+
+def is_relevant_article(title, summary):
+    """Check if article contains relevant keywords"""
+    text = (title + ' ' + summary).lower()
+    return any(keyword.lower() in text for keyword in SEARCH_KEYWORDS)
 
 
 def fetch_posts_from_api(page: int = 1, per_page: int = 100) -> tuple:
@@ -107,6 +217,10 @@ def process_post(post: Dict) -> Dict[str, Any]:
 
         # Skip if no meaningful content
         if len(title) < 10 or len(summary) < 50:
+            return None
+
+        # Check relevance with keywords
+        if not is_relevant_article(title, summary):
             return None
 
         return {

@@ -33,12 +33,21 @@ HEADERS = {
 
 # Infrastructure keywords - ONLY infrastructure-related content
 INFRASTRUCTURE_KEYWORDS = [
+    # Energy (primary focus)
     'power plant', 'power station', 'hydropower', 'hydro power', 'geothermal',
     'solar', 'wind', 'renewable energy', 'electricity generation', 'dam',
     'transmission', 'grid', 'substation', 'power line', 'electricity infrastructure',
-    'construction', 'development', 'expansion', 'project', 'commissioning',
     'mw', 'megawatt', 'capacity', 'generation', 'plant', 'facility',
-    'infrastructure', 'energy infrastructure', 'data center', 'green energy'
+    'energy infrastructure', 'green energy', 'nuclear', 'thermal', 'biomass',
+    'wind farm', 'battery storage', 'energy storage',
+    # Infrastructure
+    'construction', 'development', 'expansion', 'project', 'commissioning',
+    'infrastructure', 'data center',
+    # Economic
+    'finance', 'investment', 'fintech', 'economic', 'banking', 'trade',
+    # Technology
+    'digital', 'technology', 'ICT', 'AI', 'cybersecurity', 'broadband',
+    'telecommunications', 'e-government', 'fiber optic'
 ]
 
 # Exclude non-infrastructure content

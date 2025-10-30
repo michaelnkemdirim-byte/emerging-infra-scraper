@@ -19,8 +19,8 @@ MEDIA_URL = f"{BASE_URL}/media"
 COUNTRY = "Ghana"
 SOURCE_NAME = "Ghana Ports & Harbours Authority"
 
-# Date filtering - Last 30 days only
-DATE_30_DAYS_AGO = datetime.now() - timedelta(days=30)
+# Date filtering - Last 7 days to match other scrapers
+DATE_7_DAYS_AGO = datetime.now() - timedelta(days=7)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -28,17 +28,17 @@ HEADERS = {
 }
 
 
-def fetch_page(url: str, retries: int = 3) -> str:
+def fetch_page(url: str, retries: int = 2) -> str:
     """Fetch a page with retries"""
     for attempt in range(retries):
         try:
-            response = requests.get(url, headers=HEADERS, timeout=30)
+            response = requests.get(url, headers=HEADERS, timeout=20)
             response.raise_for_status()
             return response.text
         except Exception as e:
-            print(f"  Error fetching {url} (attempt {attempt+1}/{retries}): {e}")
             if attempt < retries - 1:
-                time.sleep(2)
+                print(f"  Retry {attempt+1}/{retries} for {url[:50]}...")
+                time.sleep(1)  # Reduced from 2 to 1 second
     return ""
 
 
@@ -189,20 +189,24 @@ def scrape_all_articles():
     # Step 1: Collect all article URLs from pagination
     print("\nStep 1: Collecting article URLs from pagination pages...")
     all_article_urls = []
+    empty_pages = 0
 
-    # Try pages 1-60 (we know page 58 exists)
-    for page_num in range(1, 61):
+    # Try pages 1-15 (limit to speed up scraping)
+    for page_num in range(1, 16):
         print(f"  Scanning page {page_num}...", end='\r')
         urls = extract_article_urls_from_page(page_num)
 
         if not urls:
-            # No articles found, might be end of pagination
-            if page_num > 10:  # Only break after trying at least 10 pages
+            empty_pages += 1
+            # Break if 3 consecutive empty pages (likely reached end)
+            if empty_pages >= 3:
+                print(f"\n  Stopping: {empty_pages} consecutive empty pages")
                 break
         else:
+            empty_pages = 0  # Reset counter
             all_article_urls.extend(urls)
 
-        time.sleep(0.5)  # Be polite
+        time.sleep(0.3)  # Reduced delay
 
     # Remove duplicates
     all_article_urls = list(dict.fromkeys(all_article_urls))
@@ -229,11 +233,11 @@ def scrape_all_articles():
                 if article_data and article_data['title']:
                     # Deduplicate by URL and title
                     if article_data['url'] not in seen_urls and article_data['title'] not in seen_titles:
-                        # Filter by date - only include articles from last 30 days
+                        # Filter by date - only include articles from last 7 days
                         if article_data.get('date_iso'):
                             try:
                                 article_date = datetime.strptime(article_data['date_iso'], '%Y-%m-%d')
-                                if article_date >= DATE_30_DAYS_AGO:
+                                if article_date >= DATE_7_DAYS_AGO:
                                     seen_urls.add(article_data['url'])
                                     seen_titles.add(article_data['title'])
                                     all_data.append(article_data)

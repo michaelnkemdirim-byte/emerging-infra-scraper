@@ -27,6 +27,11 @@ KEYWORD_CATEGORY_MAP = {
     # Port category
     'port': 'port',
 
+    # Airport category
+    'airport': 'airport',
+    'terminal': 'airport',
+    'runway': 'airport',
+
     # Rail category
     'railway': 'rail',
 
@@ -45,6 +50,55 @@ KEYWORD_CATEGORY_MAP = {
     'smart city': 'smart city',
     'urban development': 'smart city',
     'corridor': 'smart city',
+
+    # Water/Sanitation category
+    'water supply': 'water',
+    'sanitation': 'water',
+    'wastewater': 'water',
+    'sewage': 'water',
+    'water treatment': 'water',
+
+    # Waste Management category
+    'waste management': 'waste',
+    'recycling': 'waste',
+
+    # Economic category
+    'finance': 'economic',
+    'trade': 'economic',
+    'economic': 'economic',
+    'crypto': 'economic',
+    'investment': 'economic',
+    'fintech': 'economic',
+    'stock exchange': 'economic',
+    'banking': 'economic',
+    'commerce': 'economic',
+    'export': 'economic',
+
+    # Energy category
+    'solar': 'energy',
+    'wind farm': 'energy',
+    'hydropower': 'energy',
+    'power plant': 'energy',
+    'electricity': 'energy',
+    'renewable energy': 'energy',
+    'geothermal': 'energy',
+    'nuclear': 'energy',
+    'thermal': 'energy',
+    'dam': 'energy',
+    'grid': 'energy',
+
+    # Technology category
+    'technology': 'technology',
+    'digital': 'technology',
+    'broadband': 'technology',
+    '5G': 'technology',
+    'data center': 'technology',
+    'e-government': 'technology',
+    'ICT': 'technology',
+    'fiber optic': 'technology',
+    'AI': 'technology',
+    'cybersecurity': 'technology',
+    'telecommunications': 'technology',
 
     # General infrastructure (will be categorized by AI)
     'infrastructure': 'Infrastructure',
