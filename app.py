@@ -57,8 +57,8 @@ def install_playwright_browsers():
 # Install browsers (runs once per app restart)
 browser_status = install_playwright_browsers()
 
-# Data file path
-DATA_FILE = Path(__file__).parent / "combined_data.csv"
+# Data file paths
+DATA_FILE = Path(__file__).parent / "combined_data.xlsx"  # Excel only
 MASTER_SCRAPER = Path(__file__).parent / "master_scraper.py"
 
 # Session state for scraper status
@@ -176,18 +176,13 @@ with st.sidebar:
 # Load data
 @st.cache_data
 def load_data():
-    """Load combined_data.csv with caching"""
+    """Load combined_data.xlsx with caching"""
     if not DATA_FILE.exists():
         return None
 
     try:
-        # Read CSV with error handling
-        df = pd.read_csv(
-            DATA_FILE,
-            on_bad_lines='skip',  # Skip malformed lines
-            encoding='utf-8',
-            skipinitialspace=True  # Handle extra spaces
-        )
+        # Read Excel file only
+        df = pd.read_excel(DATA_FILE, engine='openpyxl')
 
         # Strip whitespace from column names
         df.columns = df.columns.str.strip()

@@ -15,11 +15,14 @@ from collections import defaultdict
 import sys
 import json
 import anthropic
+import openpyxl
+from openpyxl.styles import Font, PatternFill
 
 # Configuration
 ROOT_DIR = Path(__file__).parent
 COUNTRY_MODULES_DIR = ROOT_DIR / "contryModules"
 OUTPUT_FILE = ROOT_DIR / "combined_data.csv"
+OUTPUT_EXCEL_FILE = ROOT_DIR / "combined_data.xlsx"
 SECRETS_FILE = ROOT_DIR / "secrets.toml"
 MAX_CONCURRENT_SCRAPERS = 20  # Run up to 20 scrapers simultaneously
 
@@ -464,13 +467,18 @@ def combine_csv_files(results, output_file):
     print(f"Combining {len(csv_files)} CSV files (filtering for last 7 days)...")
 
     with open(output_file, 'w', newline='', encoding='utf-8') as outfile:
-        writer = csv.DictWriter(outfile, fieldnames=CSV_FIELDNAMES)
+        writer = csv.DictWriter(outfile, fieldnames=CSV_FIELDNAMES, lineterminator='\n')
         writer.writeheader()
 
         for csv_file in csv_files:
             try:
                 with open(csv_file, 'r', encoding='utf-8') as infile:
                     reader = csv.DictReader(infile)
+
+                    # Strip whitespace from fieldnames to handle IDE auto-formatting
+                    if reader.fieldnames:
+                        reader.fieldnames = [field.strip() for field in reader.fieldnames]
+
                     records_written = 0
                     records_skipped = 0
 
@@ -488,8 +496,12 @@ def combine_csv_files(results, output_file):
                             except:
                                 pass  # If date parsing fails, include the article
 
-                        # Ensure all required fields are present
-                        filtered_row = {field: row.get(field, '') for field in CSV_FIELDNAMES}
+                        # Ensure all required fields are present and strip whitespace
+                        filtered_row = {}
+                        for field in CSV_FIELDNAMES:
+                            value = row.get(field, '')
+                            # Strip whitespace from string values
+                            filtered_row[field] = value.strip() if isinstance(value, str) else value
                         writer.writerow(filtered_row)
                         records_written += 1
                         filtered_records += 1
@@ -503,6 +515,70 @@ def combine_csv_files(results, output_file):
 
     print(f"\n✓ Combined {filtered_records} records from last 7 days (filtered out {total_records - filtered_records} older articles)")
     return filtered_records
+
+
+def convert_csv_to_excel(csv_file, excel_file):
+    """Convert CSV file to Excel with formatting"""
+    import csv
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+
+    print("\n" + "="*80)
+    print("CONVERTING TO EXCEL FORMAT")
+    print("="*80)
+
+    # Create workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Infrastructure Data"
+
+    # Read CSV and write to Excel
+    with open(csv_file, 'r', encoding='utf-8') as f:
+        reader = csv.reader(f)
+        for row_idx, row in enumerate(reader, start=1):
+            for col_idx, value in enumerate(row, start=1):
+                cell = ws.cell(row=row_idx, column=col_idx, value=value)
+
+                # Format header row
+                if row_idx == 1:
+                    cell.font = Font(bold=True, color="FFFFFF")
+                    cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # Auto-adjust column widths
+    for column in ws.columns:
+        max_length = 0
+        column_letter = get_column_letter(column[0].column)
+
+        for cell in column:
+            try:
+                if cell.value:
+                    # Limit to reasonable max width
+                    cell_length = min(len(str(cell.value)), 50)
+                    max_length = max(max_length, cell_length)
+            except:
+                pass
+
+        adjusted_width = max_length + 2
+        ws.column_dimensions[column_letter].width = adjusted_width
+
+    # Freeze header row
+    ws.freeze_panes = "A2"
+
+    # Save Excel file
+    wb.save(excel_file)
+
+    # Get file sizes
+    import os
+    csv_size = os.path.getsize(csv_file) / 1024  # KB
+    excel_size = os.path.getsize(excel_file) / 1024  # KB
+
+    print(f"\n✓ Excel file created:")
+    print(f"  CSV size: {csv_size:.1f} KB")
+    print(f"  Excel size: {excel_size:.1f} KB")
+    print(f"  Location: {excel_file}")
+    print("="*80)
 
 
 def print_summary(results, total_elapsed):
@@ -871,11 +947,17 @@ def main():
             print("\n⚠️  Skipping categorization (no API key)")
         final_records = total_records
 
+    # Convert CSV to Excel
+    if OUTPUT_FILE.exists():
+        convert_csv_to_excel(OUTPUT_FILE, OUTPUT_EXCEL_FILE)
+
     # Print summary
     total_elapsed = time.time() - start_time
     print_summary(results, total_elapsed)
 
     print(f"\n✓ Combined data saved to: {OUTPUT_FILE}")
+    if OUTPUT_EXCEL_FILE.exists():
+        print(f"✓ Excel file saved to: {OUTPUT_EXCEL_FILE}")
     print(f"✓ Total raw records: {total_records}")
     if api_key and final_records != total_records:
         print(f"✓ Infrastructure records (after filtering): {final_records}")
