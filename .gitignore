@@ -15,6 +15,7 @@ env/
 # Output files
 out/
 *.csv
+*.xlsx
 *.json
 *.txt
 !requirements.txt
