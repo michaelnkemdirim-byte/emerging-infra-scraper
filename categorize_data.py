@@ -263,9 +263,9 @@ def categorize_csv_file(csv_file, api_key):
     if removed_count > 0:
         print(f"  🗑️  Removed {removed_count} NonInfra articles")
 
-    # Write updated CSV (preserve all existing fields including status)
+    # Write updated CSV (preserve all existing fields)
     with open(csv_path, 'w', encoding='utf-8', newline='') as f:
-        fieldnames = rows[0].keys() if rows else ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+        fieldnames = rows[0].keys() if rows else ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category']
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)

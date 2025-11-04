@@ -24,7 +24,7 @@ SECRETS_FILE = ROOT_DIR / "secrets.toml"
 MAX_CONCURRENT_SCRAPERS = 20  # Run up to 20 scrapers simultaneously
 
 # CSV fieldnames (standard across all scrapers)
-CSV_FIELDNAMES = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+CSV_FIELDNAMES = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category']
 
 # Translation settings
 TRANSLATION_CONFIG = {
