@@ -166,7 +166,6 @@ def scrape_faso7():
                         'summary': summary,
                         'url': article_url,
                         'category': '',  # Will be filled by AI
-                        'status': ''
                     }
 
                     all_data.append(article)
@@ -189,7 +188,7 @@ def save_to_csv(data, output_file):
         print("No data to save!")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category']
 
     with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)

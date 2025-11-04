@@ -28,7 +28,8 @@ DATE_AFTER = (datetime.now() - timedelta(days=DATE_FILTER_DAYS)).strftime('%Y-%m
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                  "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Accept": "application/json"
 }
 
 # Exclude non-project content
@@ -144,7 +145,6 @@ def process_post(post: Dict) -> Dict[str, Any]:
             'summary': summary.replace(',', ' '),
             'url': link,
             'category': category,
-            'status': status
         }
     except Exception as e:
         print(f"  Error processing post: {e}")
@@ -186,6 +186,7 @@ def scrape_all_posts():
     print(f"\nStep 3: Processing posts...")
     all_data = []
     seen_urls = set()  # Track URLs to avoid duplicates
+    seen_titles = set()
     seen_titles = set()  # Track titles to avoid duplicates
     skipped = 0
 
@@ -225,7 +226,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("No data to save")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category']
 
     try:
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
@@ -240,16 +241,6 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("SCRAPING SUMMARY")
         print("="*60)
         print(f"Total records: {len(data)}")
-
-        # Status breakdown
-        statuses = {}
-        for item in data:
-            status = item['status'] or 'unknown'
-            statuses[status] = statuses.get(status, 0) + 1
-
-        print("\nStatus breakdown:")
-        for status, count in sorted(statuses.items()):
-            print(f"  {status}: {count}")
 
         # Date coverage
         dates = [d['date_iso'] for d in data if d['date_iso']]

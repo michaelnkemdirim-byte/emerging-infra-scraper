@@ -28,7 +28,8 @@ DATE_AFTER = (datetime.now() - timedelta(days=DATE_FILTER_DAYS)).strftime('%Y-%m
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                  "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Accept": "application/json"
 }
 
 # Railway/infrastructure keywords
@@ -159,7 +160,6 @@ def process_post(post: Dict) -> Dict[str, Any]:
             'summary': summary.replace(',', ' '),
             'url': link,
             'category': 'rail',  # All KRC content is railway-related
-            'status': status
         }
     except Exception as e:
         print(f"  Error processing post: {e}")
@@ -240,7 +240,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("No data to save")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', ]
 
     try:
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
@@ -259,7 +259,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         # Status breakdown
         statuses = {}
         for item in data:
-            status = item['status'] or 'unknown'
+            status = item.get('category', 'unknown')
             statuses[status] = statuses.get(status, 0) + 1
 
         print("\nStatus breakdown:")

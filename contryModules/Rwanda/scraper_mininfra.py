@@ -106,6 +106,7 @@ def fetch_news_list_page(page_num: int = 1) -> tuple:
 
         # Remove duplicates and filter by date (last 7 days only)
         seen_urls = set()
+        seen_titles = set()
         unique_articles = []
         for article in articles:
             if article['url'] not in seen_urls and article['title'] not in seen_titles:
@@ -189,7 +190,6 @@ def scrape_article_content(article_info: Dict) -> Dict[str, Any]:
             'summary': summary.replace(',', ' '),
             'url': url,
             'category': '',  # Will be filled by AI
-            'status': ''     # Will be filled by AI
         }
 
     except Exception as e:
@@ -208,6 +208,7 @@ def scrape_all_news():
     print("\nStep 1: Fetching article URLs from news list pages...")
     all_articles = []
     seen_urls = set()  # Track URLs to avoid duplicates
+    seen_titles = set()
     seen_titles = set()  # Track titles to avoid duplicates
     page_num = 1
     max_pages = 25  # Safety limit (we know there are ~20 pages)
@@ -276,7 +277,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("No data to save")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category']
 
     try:
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
@@ -301,7 +302,7 @@ def save_to_csv(data: List[Dict], output_file: str):
             print(f"  Oldest: {dates[0]}")
             print(f"  Newest: {dates[-1]}")
 
-        print("\nNote: Category and status fields are empty - will be filled by AI processing")
+        print("\nNote: Category fields are empty - will be filled by AI processing")
         print("="*60)
 
     except Exception as e:

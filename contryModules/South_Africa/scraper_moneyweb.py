@@ -246,8 +246,7 @@ def scrape_rss_feed(feed_url: str, category_name: str) -> List[Dict[str, Any]]:
                     'date_iso': date_iso,
                     'summary': summary.replace(',', ' ').replace('\n', ' '),
                     'url': link_text,
-                    'category': '',  # Will be filled by AI
-                    'status': ''     # Will be filled by AI
+                    'category': ''  # Will be filled by AI
                 })
 
             except Exception as e:
@@ -291,7 +290,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("No data to save")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category']
 
     try:
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
@@ -315,7 +314,7 @@ def save_to_csv(data: List[Dict], output_file: str):
             print(f"  Oldest: {dates[0]}")
             print(f"  Newest: {dates[-1]}")
 
-        print("\nNote: Category and status fields are empty - will be filled by AI processing")
+        print("\nNote: Category field is empty - will be filled by AI processing")
         print("=" * 60)
 
     except Exception as e:

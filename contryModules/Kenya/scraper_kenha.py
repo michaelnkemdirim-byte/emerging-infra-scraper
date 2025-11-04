@@ -29,7 +29,8 @@ DATE_AFTER = (datetime.now() - timedelta(days=DATE_FILTER_DAYS)).strftime('%Y-%m
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+                  "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Accept": "application/json"
 }
 
 
@@ -60,7 +61,6 @@ def fetch_categories() -> Dict[int, Dict[str, str]]:
             cat_map[cat_id] = {
                 'name': cat.get('name', ''),
                 'slug': cat_slug,
-                'status': status
             }
 
         return cat_map
@@ -183,7 +183,7 @@ def process_post(post: Dict, cat_map: Dict[int, Dict[str, str]]) -> Dict[str, An
         if categories and cat_map:
             for cat_id in categories:
                 if cat_id in cat_map:
-                    cat_status = cat_map[cat_id].get('status', '')
+                    cat_status = cat_map[cat_id].get('')
                     if cat_status:
                         status = cat_status
                         break
@@ -200,7 +200,6 @@ def process_post(post: Dict, cat_map: Dict[int, Dict[str, str]]) -> Dict[str, An
             'summary': summary.replace(',', ' '),
             'url': link,
             'category': 'highway',  # All KeNHA content is highway-related
-            'status': status
         }
     except Exception as e:
         print(f"  Error processing post: {e}")
@@ -217,10 +216,10 @@ def scrape_all_posts():
     cat_map = fetch_categories()
     print(f"  Found {len(cat_map)} categories")
 
-    # Show category -> status mapping
+    # Show category mapping
     for cat_id, cat_info in cat_map.items():
-        if cat_info['status']:
-            print(f"    - {cat_info['name']}: {cat_info['status']}")
+        if cat_info:
+            print(f"    - {cat_info['name']}")
 
     # Step 2: Get first page to determine total pages
     print("\nStep 2: Fetching posts from WordPress API...")
@@ -291,7 +290,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("No data to save")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', ]
 
     try:
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
@@ -310,7 +309,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         # Status breakdown
         statuses = {}
         for item in data:
-            status = item['status'] or 'unknown'
+            status = item.get('category', 'unknown')
             statuses[status] = statuses.get(status, 0) + 1
 
         print("\nStatus breakdown:")

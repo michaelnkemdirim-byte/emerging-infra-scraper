@@ -188,11 +188,11 @@ def fetch_wordpress_posts(page: int = 1, per_page: int = 100) -> List[Dict]:
         try:
             params = {
                 'page': page,
-                'per_page': per_page,
-                '_embed': 1  # Include embedded data
+                'per_page': per_page
+                # Note: '_embed': 1 causes timeout, removed
             }
 
-            response = requests.get(API_URL, params=params, headers=HEADERS, timeout=20)
+            response = requests.get(API_URL, params=params, headers=HEADERS, timeout=60)
             response.raise_for_status()
 
             return response.json()
@@ -273,8 +273,7 @@ def scrape_techcentral():
                     'date_iso': date_iso,
                     'summary': summary.replace(',', ' ').replace('\n', ' '),
                     'url': url,
-                    'category': '',  # Will be filled by AI
-                    'status': ''     # Will be filled by AI
+                    'category': ''  # Will be filled by AI
                 })
 
                 articles_this_page += 1
@@ -306,7 +305,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("No data to save")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category']
 
     try:
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
@@ -330,7 +329,7 @@ def save_to_csv(data: List[Dict], output_file: str):
             print(f"  Oldest: {dates[0]}")
             print(f"  Newest: {dates[-1]}")
 
-        print("\nNote: Category and status fields are empty - will be filled by AI processing")
+        print("\nNote: Category field is empty - will be filled by AI processing")
         print("=" * 60)
 
     except Exception as e:

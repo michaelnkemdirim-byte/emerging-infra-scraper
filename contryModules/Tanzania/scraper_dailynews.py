@@ -163,8 +163,7 @@ def scrape_all_posts() -> List[Dict]:
                     'date_iso': date_iso,
                     'summary': summary,
                     'url': url,
-                    'category': '',  # Will be filled by AI
-                    'status': ''
+                    'category': ''  # Will be filled by AI
                 })
 
             except Exception as e:
@@ -181,7 +180,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("No data to save")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category']
 
     try:
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
@@ -205,7 +204,7 @@ def save_to_csv(data: List[Dict], output_file: str):
             print(f"  Oldest: {dates[0]}")
             print(f"  Newest: {dates[-1]}")
 
-        print("\nNote: Category and status will be filled by AI processing")
+        print("\nNote: Category will be filled by AI processing")
         print("="*60)
 
     except Exception as e:

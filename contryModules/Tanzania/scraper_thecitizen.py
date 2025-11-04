@@ -225,8 +225,7 @@ def scrape_thecitizen():
                         'date_iso': result['date_iso'],
                         'summary': result['summary'].replace(',', ' ').replace('\n', ' '),
                         'url': result['url'],
-                        'category': '',  # Will be filled by AI
-                        'status': ''     # Will be filled by AI
+                        'category': ''  # Will be filled by AI
                     })
 
                     page_count += 1
@@ -258,7 +257,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("No data to save")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category']
 
     try:
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
@@ -282,7 +281,7 @@ def save_to_csv(data: List[Dict], output_file: str):
             print(f"  Oldest: {dates[0]}")
             print(f"  Newest: {dates[-1]}")
 
-        print("\nNote: Category and status fields are empty - will be filled by AI processing")
+        print("\nNote: Category field is empty - will be filled by AI processing")
         print("=" * 60)
 
     except Exception as e:

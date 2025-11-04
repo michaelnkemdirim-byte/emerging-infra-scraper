@@ -177,7 +177,6 @@ def scrape_article(url: str) -> Dict[str, Any]:
         'summary': summary,
         'url': url,
         'category': 'port',  # Ghana Ports is all about ports
-        'status': status
     }
 
 
@@ -267,7 +266,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("No data to save")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', ]
 
     try:
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
@@ -286,7 +285,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         # Status breakdown
         statuses = {}
         for item in data:
-            status = item['status'] or 'unknown'
+            status = item.get('category', 'unknown')
             statuses[status] = statuses.get(status, 0) + 1
 
         print("\nStatus breakdown:")

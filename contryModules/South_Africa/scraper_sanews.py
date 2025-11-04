@@ -11,7 +11,7 @@ import time
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from typing import List, Dict, Any
-import xml.etree.ElementTree as ET
+from lxml import etree
 import urllib3
 
 # Disable SSL warnings
@@ -173,8 +173,9 @@ def fetch_rss_feed(feed_url: str) -> List[Dict]:
         response = requests.get(feed_url, headers=HEADERS, timeout=30, verify=False)
         response.raise_for_status()
 
-        # Parse XML
-        root = ET.fromstring(response.content)
+        # Parse XML with lxml recovery mode to handle malformed feeds
+        parser = etree.XMLParser(recover=True, encoding='utf-8')
+        root = etree.fromstring(response.content, parser=parser)
 
         items = []
         # RSS 2.0 format
@@ -236,7 +237,7 @@ def fetch_article_content(url: str) -> str:
         return ""
 
 
-def process_rss_item(item: Dict, seen_urls: set) -> Dict[str, Any]:
+def process_rss_item(item: Dict, seen_urls: set, seen_titles: set) -> Dict[str, Any]:
     """Process a single RSS item"""
     try:
         title = item['title'].strip()
@@ -282,10 +283,10 @@ def process_rss_item(item: Dict, seen_urls: set) -> Dict[str, Any]:
             'date_iso': date_iso,
             'summary': summary.replace(',', ' '),
             'url': url,
-            'category': '',  # Will be filled by AI
-            'status': ''     # Will be filled by AI
+            'category': ''  # Will be filled by AI
         }
     except Exception as e:
+        print(f"    Error processing item: {e}")
         return None
 
 
@@ -298,6 +299,7 @@ def scrape_all_feeds():
 
     all_data = []
     seen_urls = set()
+    seen_titles = set()
 
     for feed_url in RSS_FEEDS:
         items = fetch_rss_feed(feed_url)
@@ -307,7 +309,7 @@ def scrape_all_feeds():
 
         print(f"\n  Processing {len(items)} items from feed...")
         for idx, item in enumerate(items, 1):
-            result = process_rss_item(item, seen_urls)
+            result = process_rss_item(item, seen_urls, seen_titles)
             if result:
                 # Filter by date - only include articles from last 7 days
                 if result.get('date_iso'):
@@ -338,7 +340,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("No data to save")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category']
 
     try:
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
@@ -362,7 +364,7 @@ def save_to_csv(data: List[Dict], output_file: str):
             print(f"  Oldest: {dates[0]}")
             print(f"  Newest: {dates[-1]}")
 
-        print("\nNote: Category and status fields are empty - will be filled by AI processing")
+        print("\nNote: Category field is empty - will be filled by AI processing")
         print("Note: This scraper collects from RSS feeds which contain mixed content")
         print("      AI categorization will filter for infrastructure-related articles")
         print("="*60)

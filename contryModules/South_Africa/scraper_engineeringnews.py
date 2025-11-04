@@ -132,8 +132,7 @@ async def scrape_category(page, category: str, our_category: str) -> List[Dict[s
                     'date_iso': date_iso,
                     'summary': summary.strip().replace(',', ' ').replace('\n', ' '),
                     'url': full_url,
-                    'category': our_category,  # Pre-filled from Engineering News category
-                    'status': ''     # Will be filled by AI
+                    'category': our_category  # Pre-filled from Engineering News category
                 })
 
             except Exception as e:
@@ -193,7 +192,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("No data to save")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category']
 
     try:
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
@@ -224,7 +223,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         for cat, count in cat_counts.items():
             print(f"  {cat}: {count}")
 
-        print("\nNote: Category pre-filled from Engineering News, status will be filled by AI processing")
+        print("\nNote: Category pre-filled from Engineering News")
         print("="*60)
 
     except Exception as e:

@@ -137,7 +137,6 @@ def parse_post(post, cat_map):
             'summary': summary,
             'url': url,
             'category': category,
-            'status': status
         }
 
     except Exception as e:
@@ -193,7 +192,7 @@ def save_to_csv(data, output_file):
         print("No data to save")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', ]
 
     try:
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
@@ -211,7 +210,7 @@ def save_to_csv(data, output_file):
         # Status breakdown
         statuses = {}
         for item in data:
-            status = item['status'] or 'unknown'
+            status = item.get('category', 'unknown')
             statuses[status] = statuses.get(status, 0) + 1
 
         print("\nStatus breakdown:")

@@ -244,7 +244,6 @@ def process_post(post: Dict) -> Dict[str, Any]:
             'summary': summary.replace(',', ' '),
             'url': link,
             'category': category,
-            'status': status
         }
     except Exception as e:
         print(f"  Error processing post: {e}")
@@ -287,6 +286,7 @@ def scrape_category(category_name: str, category_id: int):
     print(f"\nStep 3: Processing and filtering posts...")
     category_data = []
     seen_urls = set()  # Track URLs to avoid duplicates
+    seen_titles = set()
     seen_titles = set()  # Track titles to avoid duplicates
     skipped = 0
 
@@ -344,7 +344,7 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("No data to save")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category']
 
     try:
         with open(output_file, 'w', newline='', encoding='utf-8') as f:
@@ -369,16 +369,6 @@ def save_to_csv(data: List[Dict], output_file: str):
         print("\nCategory breakdown:")
         for cat, count in sorted(categories.items()):
             print(f"  {cat}: {count}")
-
-        # Status breakdown
-        statuses = {}
-        for item in data:
-            status = item['status'] or 'unknown'
-            statuses[status] = statuses.get(status, 0) + 1
-
-        print("\nStatus breakdown:")
-        for status, count in sorted(statuses.items()):
-            print(f"  {status}: {count}")
 
         # Date coverage
         dates = [d['date_iso'] for d in data if d['date_iso']]

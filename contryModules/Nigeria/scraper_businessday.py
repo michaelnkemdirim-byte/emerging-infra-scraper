@@ -6,13 +6,16 @@ Type: WordPress news site
 Focus: Business, economy, infrastructure, transport, energy
 """
 
-import requests
 import csv
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from html import unescape
 import time
 import argparse
+import json
+import pycurl
+import certifi
+from io import BytesIO
 
 # Configuration
 BASE_URL = 'https://businessday.ng'
@@ -99,26 +102,57 @@ def clean_html(raw_html):
 
 def fetch_posts_from_api(page: int = 1, per_page: int = 100) -> tuple:
     """
-    Fetch posts from WordPress API
+    Fetch posts from WordPress API using pycurl (bypasses Cloudflare detection of requests library)
     Returns: (list of posts, total pages)
+    Note: Uses smaller per_page (20) and delays to avoid Cloudflare rate limiting
     """
-    params = {
-        'page': page,
-        'per_page': per_page,
-        'after': DATE_7_DAYS_AGO,
-        '_embed': 1
-    }
+    # Use smaller per_page to reduce Cloudflare sensitivity
+    per_page = min(per_page, 20)
+
+    # Build URL with parameters
+    url = f"{WP_API_URL}?page={page}&per_page={per_page}&after={DATE_7_DAYS_AGO}&_embed=1"
 
     try:
-        response = requests.get(WP_API_URL, params=params, timeout=30)
-        response.raise_for_status()
+        buffer = BytesIO()
+        headers_buffer = BytesIO()
 
-        total_pages = int(response.headers.get('X-WP-TotalPages', 1))
-        posts = response.json()
+        c = pycurl.Curl()
+        c.setopt(c.URL, url)
+        c.setopt(c.WRITEDATA, buffer)
+        c.setopt(c.HEADERFUNCTION, headers_buffer.write)
+        c.setopt(c.USERAGENT, 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36')
+        c.setopt(c.CAINFO, certifi.where())
+        c.setopt(c.HTTP_VERSION, pycurl.CURL_HTTP_VERSION_1_1)
+        c.setopt(c.TIMEOUT, 30)
+
+        c.perform()
+        status_code = c.getinfo(c.RESPONSE_CODE)
+        c.close()
+
+        if status_code != 200:
+            if status_code == 403:
+                print(f"  Warning: Cloudflare rate limit hit (403). Wait a few minutes before retrying.")
+            print(f"  Error: HTTP {status_code} for page {page}")
+            return [], 0
+
+        # Parse headers to get total pages
+        headers_text = headers_buffer.getvalue().decode('utf-8')
+        total_pages = 1
+        for line in headers_text.split('\n'):
+            if line.lower().startswith('x-wp-totalpages:'):
+                total_pages = int(line.split(':', 1)[1].strip())
+                break
+
+        # Parse JSON body
+        body = buffer.getvalue()
+        posts = json.loads(body.decode('utf-8'))
 
         return posts, total_pages
 
-    except requests.exceptions.RequestException as e:
+    except json.JSONDecodeError as e:
+        print(f"Error: Failed to parse JSON for page {page}: {e}")
+        return [], 0
+    except Exception as e:
         print(f"Error fetching page {page}: {e}")
         return [], 0
 
@@ -189,9 +223,6 @@ def extract_article_data(post):
         # Category
         category = determine_category(title, excerpt)
 
-        # Status - leave empty for AI to determine
-        status = ''
-
         return {
             'country': 'Nigeria',
             'source': source,
@@ -200,7 +231,6 @@ def extract_article_data(post):
             'summary': excerpt,
             'url': url,
             'category': category,
-            'status': status
         }
 
     except Exception as e:
@@ -218,6 +248,7 @@ def scrape_businessday():
     all_data = []
     seen_urls = set()
     seen_titles = set()
+    seen_titles = set()
     page = 1
 
     while True:
@@ -226,6 +257,10 @@ def scrape_businessday():
 
         if not posts:
             break
+
+        # Add delay between requests to avoid Cloudflare rate limiting
+        if page > 1:
+            time.sleep(3)
 
         for post in posts:
             article = extract_article_data(post)
@@ -275,7 +310,7 @@ def save_to_csv(data, output_file):
         print("No data to save!")
         return
 
-    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category', 'status']
+    fieldnames = ['country', 'source', 'title', 'date_iso', 'summary', 'url', 'category']
 
     with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
